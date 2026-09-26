@@ -29,6 +29,11 @@ function summary(r, tb){
   return `${label(r)} has paid ${pct(r.apy30)} on average over the past 30 days${vs}. ${usd(r.tvl)} is deposited ${where(r)}.`;
 }
 
+const fundOf = r => {
+  const m = FUNDS.BY_META.find(([rx]) => rx.test(r.meta || "") || rx.test(r.symbol)), sym = r.symbol.toUpperCase();
+  return FUNDS.FUNDS[m ? m[1] : FUNDS.ALIAS[sym] || sym];
+};
+
 const stat = (v, cap, cls = "") => `<div class="panel ystat"><b class="num ${cls}">${v}</b><span>${cap}</span></div>`;
 
 function hold(f){
@@ -93,7 +98,7 @@ function main(r, board){
       <p class="fine">30-day APY and deposits per chain. Each links to the pool on DefiLlama.</p>
     </article>
   </section>
-${hold(r.cat === "tbill" && FUNDS.FUNDS[FUNDS.ALIAS[r.symbol.toUpperCase()] || r.symbol.toUpperCase()])}
+${hold(r.cat === "tbill" && fundOf(r))}
   <section class="yrel" aria-labelledby="simH">
     <h2 id="simH">Other ${esc(cat.name.replace(/^[A-Z](?=[a-z])/, c => c.toLowerCase()))} near its rate</h2>
     <div class="ylinks">${similar.map(link).join("") || '<p class="empty">No other yield of this type right now.</p>'}</div>

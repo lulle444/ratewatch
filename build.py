@@ -143,7 +143,7 @@ HOME = """  <section class="hero">
       </table>
     </div>
     <p class="more"><button class="btn" id="showMore" hidden>Show more</button></p>
-    <p class="fine">30-day APY is DefiLlama’s 30-day average, the fairer number when rates jump around. “vs T-bill” is that average minus the 3-month T-bill rate. We leave out pools under $5M, lending markets under $50M, liquidity-pool tokens and rates above 40%.</p>
+    <p class="fine">30-day APY is DefiLlama’s 30-day average, the fairer number when rates jump around. “vs T-bill” is that average minus the 3-month T-bill rate. We leave out pools under $5M, lending markets under $50M, liquidity-pool tokens, farms paid only in reward tokens and rates above 40%.</p>
   </section>
 """
 
@@ -178,7 +178,7 @@ LEARN = head("Learn", "Where dollar yield <em>comes from.</em>",
     </article>
     <article class="panel note">
       <h3>What we leave out</h3>
-      <p>Pools under $5M, lending markets under $50M, liquidity-pool positions that mix two tokens, rates above 40% and pools DefiLlama flags as outliers. Those rarely reflect what a normal deposit would earn.</p>
+      <p>Pools under $5M, lending markets under $50M, liquidity-pool positions that mix two tokens, farms that pay only in reward tokens, rates above 40% and pools DefiLlama flags as outliers. Those rarely reflect what a normal deposit would earn.</p>
     </article>
   </section>
 """
