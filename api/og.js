@@ -3,7 +3,7 @@
 // Name, colors and fonts come from brand.json. Anything that fails falls back to the static assets/og.png.
 const fs = require("fs"), path = require("path");
 const B = require("../brand.json");
-const {board: getBoard, premium: getPremium} = require("../lib/rates");
+const {board: getBoard, premium: getPremium, movers: getMovers} = require("../lib/rates");
 const FUNDS = require("../lib/funds");
 const COINS = require("../lib/coins");
 const CHAINS = require("../lib/chains");
@@ -166,6 +166,23 @@ const CARDS = {
           h({fontFamily: F.display, fontWeight: 500, fontSize: c.name.length > 12 ? 56 : 64, lineHeight: 1.04, letterSpacing: -1.5}, `What does a dollar earn on ${c.name}?`),
           h({fontSize: 24, color: K.muted, marginTop: 16, lineHeight: 1.3}, `${pct(c.avg)} for the average deposited dollar, across ${c.count} dollar yields and ${usd(c.tvl)}.`)),
         rank(c.entries.slice(0, 5).map(e => ({name: `${e.r.name} ${e.r.symbol}`, v: e.apy30, color: CAT[e.r.cat] || K.accent})), tb)),
+      h({height: 16}));
+  },
+  async movers(){
+    const m = await getMovers();
+    const up = m.rows.filter(r => r.d >= 0.05).sort((a, b) => b.d - a.d).slice(0, 4), down = m.rows.filter(r => r.d <= -0.05).sort((a, b) => a.d - b.d).slice(0, 4);
+    if (!up.length && !down.length) return null;
+    const line = r => h({alignItems: "center", justifyContent: "space-between", padding: "12px 0", borderBottom: `1px solid ${K.line}`, fontSize: 23},
+      h({alignItems: "center"}, h({width: 12, height: 12, borderRadius: 6, backgroundColor: CAT[r.cat] || K.accent, marginRight: 12}), h({fontWeight: 500}, `${r.name} ${r.symbol}`.slice(0, 26))),
+      h({alignItems: "baseline"}, h({fontFamily: F.mono, fontWeight: 500, color: K.muted, fontSize: 19, marginRight: 16}, pct(r.apy7)),
+        h({fontFamily: F.mono, fontWeight: 500, width: 140, justifyContent: "flex-end", color: r.d > 0 ? K.up : K.down}, pts(r.d))));
+    const col = (title, list) => h({flexDirection: "column", width: 520},
+      h({fontFamily: F.mono, fontWeight: 500, fontSize: 16, letterSpacing: 1.5, color: K.muted, textTransform: "uppercase", paddingBottom: 8, borderBottom: `1.5px solid ${K.ink}`}, title),
+      ...list.map(line));
+    return frame("This week in dollar yields", "/movers",
+      h({fontFamily: F.display, fontWeight: 500, fontSize: 60, lineHeight: 1.04, letterSpacing: -1.5, marginTop: 24}, "What moved this week?"),
+      h({fontSize: 22, color: K.muted, marginTop: 10}, "7-day average APY, this week against last week"),
+      h({justifyContent: "space-between", marginTop: 28}, col("Rising", up), col("Falling", down)),
       h({height: 16}));
   },
   async funds(){

@@ -42,7 +42,7 @@ function renderCats(){
       <h3><span class="sw"></span>${esc(c.name)}</h3>
       <p class="big num">${c.median == null ? "–" : c.median.toFixed(2)}<small>%</small></p>
       <p>typical 30-day APY · ${c.count} yield${c.count === 1 ? "" : "s"} · ${usd(c.tvl)}</p>
-      ${tb && c.median != null ? `<p class="over">${signed(c.median - tb.rate)} vs T-bill</p>` : ""}
+      ${tb && c.median != null ? `<p class="over">${signed(c.median - tb.rate)} <span class="nw">vs T-bill</span></p>` : ""}
     </button>`).join("");
 }
 

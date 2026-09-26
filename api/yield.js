@@ -3,7 +3,7 @@
 // any script runs; app.js only draws the history chart. /sitemap-yields.xml lists every yield page.
 const fs = require("fs"), path = require("path");
 const B = require("../brand.json");
-const {board: getBoard} = require("../lib/rates");
+const {board: getBoard, movers: getMovers} = require("../lib/rates");
 const FUNDS = require("../lib/funds");
 const COINS = require("../lib/coins");
 const CHAINS = require("../lib/chains");
@@ -11,7 +11,7 @@ const CHAINS = require("../lib/chains");
 const SITE = "https://" + B.domain;
 const BOT = String(B.telegram || "").replace(/^@/, "");
 const read = f => fs.readFileSync(path.join(__dirname, "..", f), "utf8");
-let TPL, FTPL, CTPL, HTPL, KTPL, NOTFOUND;
+let TPL, FTPL, CTPL, HTPL, KTPL, MTPL, NOTFOUND;
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
 const pct = v => v == null || !isFinite(v) ? "–" : v.toFixed(2) + "%";
@@ -360,6 +360,79 @@ ${others.length ? `
 `;
 }
 
+// A 30-day line of daily APY, drawn in the yield's type color, with a dot on today.
+function spark(v, cat){
+  if (!v || v.length < 2) return "";
+  const W = 96, H = 26, lo = Math.min(...v), hi = Math.max(...v), span = hi - lo || 1;
+  const xy = v.map((y, i) => [(i / (v.length - 1) * (W - 4) + 2).toFixed(1), (H - 3 - (y - lo) / span * (H - 6)).toFixed(1)]);
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true" style="--c:var(--b-cat-${cat})"><polyline points="${xy.map(p => p.join(",")).join(" ")}"/><circle cx="${xy[xy.length - 1][0]}" cy="${xy[xy.length - 1][1]}" r="2.6"/></svg>`;
+}
+const signed = (v, f = x => x.toFixed(2)) => v == null ? "–" : (v > 0 ? "+" : v < 0 ? "−" : "±") + f(Math.abs(v));
+const usdS = v => v == null ? "–" : (v > 0 ? "+" : v < 0 ? "−" : "±") + usd(Math.abs(v)).replace("$0k", "$0");
+
+// /movers: this week's biggest rate moves and deposit flows among the big dollar yields.
+function moversMain(m, board){
+  const tb = m.tbill, cat = id => board.cats.find(c => c.id === id) || {name: id, short: id};
+  const rows = m.rows, up = rows.filter(r => r.d >= 0.05).sort((a, b) => b.d - a.d).slice(0, 8), down = rows.filter(r => r.d <= -0.05).sort((a, b) => a.d - b.d).slice(0, 8);
+  const flows = rows.filter(r => r.flow != null && r.tvl >= 50e6), inflow = flows.filter(r => r.flow > 0).sort((a, b) => b.flow - a.flow).slice(0, 6), outflow = flows.filter(r => r.flow < 0).sort((a, b) => a.flow - b.flow).slice(0, 6);
+  const net = rows.reduce((s, r) => s + (r.flow || 0), 0), total = rows.reduce((s, r) => s + r.tvl, 0);
+  const where = r => r.cat === "lending" ? r.chains[0] + (r.meta ? " · " + r.meta : "") : r.chains.length === 1 ? r.chains[0] : r.chains.length + " chains";
+  const who = r => `<a class="tok rowlink" href="/y/${esc(r.slug)}"><b>${esc(r.name)} <span class="muted">${esc(r.symbol)}</span></b><small><span class="sw" style="--c:var(--b-cat-${r.cat})"></span> ${esc(cat(r.cat).short)} · ${esc(where(r))}</small></a>`;
+  const moveTable = (list, id, empty) => list.length ? `<div class="tablebox"><table class="rt ct mt" aria-labelledby="${id}">
+      <thead><tr><th scope="col">Yield</th><th scope="col" class="hs">Past 30 days</th><th scope="col" class="r">This week</th><th scope="col" class="r">Change</th></tr></thead>
+      <tbody>${list.map(r => `<tr><td>${who(r)}</td><td class="hs">${spark(r.spark, r.cat)}</td>
+        <td class="r"><span class="apy">${pct(r.apy7)}</span><small class="was">was ${pct(r.prev7)}</small></td>
+        <td class="r"><span class="over ${r.d > 0 ? "pos" : "neg"}">${pts(r.d)}</span></td></tr>`).join("")}</tbody></table></div>` : `<p class="empty">${empty}</p>`;
+  const flowTable = (list, id, empty) => list.length ? `<div class="tablebox"><table class="rt ct mt" aria-labelledby="${id}">
+      <thead><tr><th scope="col">Yield</th><th scope="col" class="r">Deposits now</th><th scope="col" class="r">7-day change</th></tr></thead>
+      <tbody>${list.map(r => `<tr><td>${who(r)}</td><td class="r num">${usd(r.tvl)}</td>
+        <td class="r"><span class="over ${r.flow > 0 ? "pos" : "neg"}">${usdS(r.flow)}</span><small class="was">${signed(r.flowPct, x => x.toFixed(1))}%</small></td></tr>`).join("")}</tbody></table></div>` : `<p class="empty">${empty}</p>`;
+  const top = up[0], bottom = down[0];
+  const share = top ? `Biggest dollar yield move this week: ${top.name} ${top.symbol} ${pts(top.d)} to ${pct(top.apy7)}` + (bottom ? `. Biggest drop: ${bottom.name} ${bottom.symbol} ${pts(bottom.d)}.` : ".") : "What moved in dollar yields this week";
+  const tile = c => `<div class="panel ystat mcat" style="--c:var(--b-cat-${c.id})"><b class="num">${pct(c.apy7)}</b><span>${esc(c.name)}, this week</span><span class="over ${c.apy7 - c.prev7 > 0.02 ? "pos" : c.apy7 - c.prev7 < -0.02 ? "neg" : "flat"}">${pts(c.apy7 != null && c.prev7 != null ? c.apy7 - c.prev7 : null)} vs last week</span></div>`;
+  const tbd = tb && tb.weekAgo != null ? tb.rate - tb.weekAgo : null;
+  return `  <section class="pagehead">
+    <p class="eyebrow">This week in dollar yields</p>
+    <h1>What <em>moved</em> this week?</h1>
+    <p class="lede">Every dollar yield with at least $20M, this week against last week. We compare 7-day averages of the daily rate, so a one-day spike doesn’t count as a move. The 3-month T-bill rate ${tb ? `is ${pct(tb.rate)}` + (tbd != null ? `, ${Math.abs(tbd) < 0.005 ? "unchanged on the week" : `${pts(tbd)} on the week`}` : "") : "is the line to beat"}.</p>
+    <p class="yact"><a class="btn" href="${esc(xLink(share, SITE + "/movers"))}" target="_blank" rel="noopener">Share on X</a>${BOT ? ` <a class="btn" href="https://t.me/${BOT}?start=wk" target="_blank" rel="noopener">Get it every Monday on Telegram</a>` : ""}</p>
+  </section>
+
+  <section class="ystats" aria-label="The week by type">
+    ${m.cats.filter(c => c.count).map(tile).join("\n    ")}
+  </section>
+
+  <section class="twocol mcols">
+    <section class="panel board" aria-labelledby="upH">
+      <div class="sectionhead"><div><h2 id="upH">Rising</h2><p class="sub">Biggest rises in the 7-day average APY.</p></div></div>
+      ${moveTable(up, "upH", "No yield rose by 0.05 points or more this week.")}
+    </section>
+    <section class="panel board" aria-labelledby="downH">
+      <div class="sectionhead"><div><h2 id="downH">Falling</h2><p class="sub">Biggest drops in the 7-day average APY.</p></div></div>
+      ${moveTable(down, "downH", "No yield fell by 0.05 points or more this week.")}
+    </section>
+  </section>
+
+  <section class="twocol mcols">
+    <section class="panel board" aria-labelledby="inH">
+      <div class="sectionhead"><div><h2 id="inH">Where money went in</h2><p class="sub">Biggest deposit growth over 7 days, yields over $50M.</p></div></div>
+      ${flowTable(inflow, "inH", "No big inflows this week.")}
+    </section>
+    <section class="panel board" aria-labelledby="outH">
+      <div class="sectionhead"><div><h2 id="outH">Where money left</h2><p class="sub">Biggest deposit drops over 7 days, yields over $50M.</p></div></div>
+      ${flowTable(outflow, "outH", "No big outflows this week.")}
+    </section>
+  </section>
+  <p class="fine block">${rows.length} yields with ${usd(total)} deposited, ${usdS(net)} on the week. Daily rates and deposits from DefiLlama; deposits also move when a token’s price moves. Updated every few hours.</p>
+
+  <section class="twocol">
+    <article class="panel note"><h3>Why rates move</h3><p>Lending rates follow borrowing demand, which jumps when traders want leverage. Synthetic dollars follow futures funding rates. Savings rates change when a protocol votes to change them, and T-bill funds follow the Fed. A big rise is often a sign of more risk, not a free lunch.</p></article>
+    <article class="panel note"><h3>Get it by message</h3><p>Every Monday our Telegram bot sends the T-bill rate, the typical rate of each type and the week’s biggest moves. Or set an alert on any single yield from its page.</p>${BOT ? `<p><a class="btn" href="https://t.me/${BOT}?start=wk" target="_blank" rel="noopener">Get the Monday digest</a></p>` : ""}</article>
+  </section>
+  <p class="block"><a class="btn" href="/">See every dollar yield</a> <a class="btn" href="/premium">What risk has paid</a></p>
+`;
+}
+
 function page(r, board){
   const sum = summary(r, board.tbill);
   const t = `${label(r)}: APY and history vs T-bills · ${B.name}`;
@@ -402,6 +475,16 @@ module.exports = async function handler(req, res){
     return res.status(200).send(CTPL
       .replace(/__COIN__/g, () => coin.id).replace(/__NAME__/g, () => esc(coin.name)).replace(/__DESC__/g, () => esc(desc))
       .replace("__MAIN__", () => coinMain(coin, list, board)));
+  }
+
+  if (q.p === "movers"){
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    let m = null;
+    try { m = rows.length ? await getMovers() : null; } catch (e) { console.error("movers:", e); }
+    if (!m || m.rows.length < 5){ res.setHeader("Cache-Control", "no-store"); return res.status(503).send(read("404.html").replace("The link may be old or mistyped.", "This week’s rates are unavailable right now. Please try again in a minute.")); }
+    MTPL = MTPL || read("templates/movers.html");
+    res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=86400");
+    return res.status(200).send(MTPL.replace("__MAIN__", () => moversMain(m, board)));
   }
 
   if (q.p === "chains" || q.p === "chain"){

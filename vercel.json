@@ -3,16 +3,22 @@
   "trailingSlash": false,
   "functions": {
     "api/og.js": {
-      "includeFiles": "assets/logo-mark.svg"
+      "includeFiles": "assets/logo-mark.svg",
+      "maxDuration": 60
     },
     "api/yield.js": {
-      "includeFiles": "{templates/yield.html,templates/funds.html,templates/coin.html,templates/chains.html,templates/chain.html,404.html}"
+      "includeFiles": "{templates/yield.html,templates/funds.html,templates/coin.html,templates/chains.html,templates/chain.html,templates/movers.html,404.html}",
+      "maxDuration": 60
     }
   },
   "rewrites": [
     {
       "source": "/funds",
       "destination": "/api/yield?p=funds"
+    },
+    {
+      "source": "/movers",
+      "destination": "/api/yield?p=movers"
     },
     {
       "source": "/chains",

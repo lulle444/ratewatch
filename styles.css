@@ -96,7 +96,7 @@ button{font:inherit;color:inherit}
 .cat .big{font:500 34px/1.1 var(--display);margin:12px 0 2px;letter-spacing:-.02em}
 .cat .big small{font-size:16px;color:var(--muted)}
 .cat p{margin:0;color:var(--muted);font-size:13px}
-.cat .over{font:500 12.5px var(--mono);margin-top:8px;color:var(--ink)}
+.cat .over{font:500 12.5px var(--mono);margin-top:8px;color:var(--ink);white-space:normal}
 .sw{width:10px;height:10px;border-radius:50%;background:var(--c);display:inline-block;flex:none}
 
 /* sections */
@@ -314,3 +314,18 @@ button{font:inherit;color:inherit}
 .mixlegend b.num{color:var(--ink)}
 .cht td:first-child{min-width:180px}
 @media (max-width:520px){.cbars{grid-template-columns:106px minmax(0,1fr) 50px;gap:9px 8px}.cb-name{font-size:12.5px}.cb-val{font-size:12.5px}.cht td:first-child{min-width:0}}
+/* /movers */
+.mcols{align-items:start}
+.mcols>.panel{margin-bottom:0}
+.mt td{vertical-align:middle}
+.mt .tok small{display:inline-flex;align-items:center;gap:5px}
+.mt .tok small .sw{width:7px;height:7px}
+.mt small.was{display:block;font:400 11.5px var(--mono);color:var(--muted);margin-top:2px;white-space:nowrap}
+.spark{display:block;overflow:visible}
+.spark polyline{fill:none;stroke:var(--c);stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round}
+.spark circle{fill:var(--c);stroke:var(--panel);stroke-width:1.5}
+.mcat{border-top:4px solid var(--c)}
+.mcat .over{margin-top:4px;white-space:normal}
+.catsmore a+a{margin-left:18px}
+@media (max-width:600px){.catsmore a{display:block}.catsmore a+a{margin:6px 0 0}}
+.nw{white-space:nowrap}

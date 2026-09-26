@@ -6,7 +6,7 @@ on:
 jobs:
   warm:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 5
     steps:
       - name: Rates
         run: |
@@ -32,6 +32,8 @@ jobs:
           echo "funds page: $(curl -sS -m 60 "$SITE/funds" | grep -o '<tr data-us' | wc -l) funds, $(curl -sS -m 60 -o /dev/null "$SITE/api/og?p=funds" -w 'image HTTP %{http_code} %{content_type} %{size_download}B %{redirect_url}')"
           curl -sS -m 90 "$SITE/api/history?p=premium" | python3 -c 'import json,sys; d=json.load(sys.stdin); p=d.get("points",[]); l=p[-1] if p else {}; print("premium:", len(p), "days", d.get("error",""), {c["id"]: (round(l[c["id"]]-l["bench"],2) if l.get(c["id"]) is not None else None) for c in d.get("cats",[])}, {c["id"]: len(c["yields"]) for c in d.get("cats",[])})'
           curl -sS -m 90 -o /dev/null "$SITE/api/og?p=premium" -w "premium image: HTTP %{http_code} %{content_type} %{size_download}B %{redirect_url}\n"
+          curl -sS -m 90 "$SITE/movers" -o mv.html -w "movers page: HTTP %{http_code} %{size_download}B in %{time_total}s\n"; grep -o '<h2 id="[a-z]*H">[^<]*</h2>\|<a class="tok rowlink" href="/y/[^"]*"\|<span class="over [a-z]*">[^<]*</span>\|<p class="fine block">[^<]*' mv.html | sed 's/<a class="tok rowlink" href="\/y\//  /; s/<[^>]*>//g; s/"$//' | paste -sd' ' | sed 's/  /\n  /g' | head -40
+          curl -sS -m 90 -o /dev/null "$SITE/api/og?p=movers" -w "movers image: HTTP %{http_code} %{content_type} %{size_download}B %{redirect_url}\n"
           curl -sS -m 60 "$SITE/chains" -o ch.html -w "chains page: HTTP %{http_code} %{size_download}B\n"; grep -o 'href="/chains/[a-z0-9-]*"><b>[^<]*</b><small>[^<]*' ch.html | sed 's/.*chains\//  /; s/"><b>/ | /; s/<\/b><small>/ | /'; grep -o 'Also tracked, one yield each:.*' ch.html | sed 's/<[^>]*>//g' | cut -c1-400
           curl -sS -m 90 -o /dev/null "$SITE/api/og?p=chains" -w "chains image: HTTP %{http_code} %{content_type} %{size_download}B %{redirect_url}\n"
           for H in $(grep -o 'href="/chains/[a-z0-9-]*"><b>' ch.html | sed 's/.*chains\///; s/".*//' | sort -u); do echo "chain /chains/$H: $(curl -sS -m 60 -o c.html -w '%{http_code}' "$SITE/chains/$H") $(grep -o '<a class="tok rowlink"' c.html | wc -l) yields, image $(curl -sS -m 90 -o /dev/null "$SITE/api/og?p=chain&c=$H" -w '%{http_code} %{content_type}')"; done

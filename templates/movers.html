@@ -3,20 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Where dollar yield comes from · Ratewatch</title>
-<meta name="description" content="T-bill funds, savings rates, synthetic dollars and lending: who pays the yield, and what you take on to earn it.">
-<link rel="canonical" href="https://ratewatch-lemon.vercel.app/learn">
+<title>What moved in dollar yields this week · Ratewatch</title>
+<meta name="description" content="The dollar yields on chain whose rates rose and fell the most this week, and where deposits went in and out, against the 3-month T-bill rate.">
+<link rel="canonical" href="https://ratewatch-lemon.vercel.app/movers">
 <link rel="icon" type="image/svg+xml" href="/assets/logo-mark.svg">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Where dollar yield comes from · Ratewatch">
-<meta property="og:description" content="T-bill funds, savings rates, synthetic dollars and lending: who pays the yield, and what you take on to earn it.">
-<meta property="og:url" content="https://ratewatch-lemon.vercel.app/learn">
-<meta property="og:image" content="https://ratewatch-lemon.vercel.app/assets/og.png">
+<meta property="og:title" content="What moved in dollar yields this week · Ratewatch">
+<meta property="og:description" content="The dollar yields on chain whose rates rose and fell the most this week, and where deposits went in and out, against the 3-month T-bill rate.">
+<meta property="og:url" content="https://ratewatch-lemon.vercel.app/movers">
+<meta property="og:image" content="https://ratewatch-lemon.vercel.app/api/og?p=movers">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://ratewatch-lemon.vercel.app/assets/og.png">
+<meta name="twitter:image" content="https://ratewatch-lemon.vercel.app/api/og?p=movers">
 <meta name="theme-color" content="#F4F1E8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,41 +24,15 @@
 <link rel="stylesheet" href="/styles.css">
 <link rel="stylesheet" href="/brand.css">
 </head>
-<body data-page="learn" data-bot="useRatewatchBot">
+<body data-page="movers" data-bot="useRatewatchBot">
 <canvas id="tape" aria-hidden="true"></canvas>
 <div class="wrap">
   <header class="nav">
     <a class="logo" href="/" aria-label="Ratewatch home"><img src="/assets/logo-mark.svg" alt="" width="34" height="34"><span class="word">Rate<i>watch</i></span></a>
-    <nav class="navlinks" aria-label="Main"><a href="/">Rates</a><a href="/movers">Movers</a><a href="/funds">Funds</a><a href="/chains">Chains</a><a href="/calculator">Calculator</a><a href="/alerts">Alerts</a><a href="/learn" aria-current="page">Learn</a><a href="/about">About</a></nav>
+    <nav class="navlinks" aria-label="Main"><a href="/">Rates</a><a href="/movers" aria-current="page">Movers</a><a href="/funds">Funds</a><a href="/chains">Chains</a><a href="/calculator">Calculator</a><a href="/alerts">Alerts</a><a href="/learn">Learn</a><a href="/about">About</a></nav>
     <div class="navright"><span class="bench-pill" id="benchPill" title="3-month US T-bill rate"><small>T-bill</small> <b class="num" id="benchPillRate">–</b></span></div>
   </header>
-  <section class="pagehead">
-    <div>
-    <p class="eyebrow">Learn</p>
-    <h1>Where dollar yield <em>comes from.</em></h1>
-    <p class="lede">Every dollar yield on chain is paid by someone. Here is who pays it, and what you take on to earn it.</p>
-    </div>
-  </section>
-  <section class="learn" id="learnCats"></section>
-  <section class="twocol">
-    <article class="panel note">
-      <h3>Why hold everything against T-bills?</h3>
-      <p>Three-month US Treasury bills are as close to a risk-free dollar rate as markets have. A token that pays about the T-bill rate is mostly passing that interest on. Every point above it has to come from somewhere: borrowers who might not pay back, a trading strategy that can lose, or rewards that end.</p>
-    </article>
-    <article class="panel note">
-      <h3>Today’s rate or the 30-day average?</h3>
-      <p>Lending rates can spike for an hour when borrowing demand jumps. The 30-day average smooths that out, so we rank by it and show today’s rate next to it. A big gap between the two means the rate is moving.</p>
-    </article>
-    <article class="panel note">
-      <h3>Can I hold it?</h3>
-      <p>Most tokenized T-bill funds only open to verified or institutional investors, often with a minimum. Lending markets and savings tokens are usually open to any wallet. Check the issuer’s terms before you deposit.</p>
-    </article>
-    <article class="panel note">
-      <h3>What we leave out</h3>
-      <p>Pools under $5M, lending markets under $50M, liquidity-pool positions that mix two tokens, farms that pay only in reward tokens, rates above 40% and pools DefiLlama flags as outliers. Those rarely reflect what a normal deposit would earn.</p>
-    </article>
-  </section>
-
+__MAIN__
   <footer class="foot">
     <div><a class="logo small" href="/"><img src="/assets/logo-mark.svg" alt="" width="24" height="24"><span class="word">Rate<i>watch</i></span></a>
       <p>What a dollar earns on chain, held against the T-bill rate.</p></div>
