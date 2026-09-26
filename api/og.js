@@ -4,6 +4,7 @@
 const fs = require("fs"), path = require("path");
 const B = require("../brand.json");
 const {board: getBoard} = require("../lib/rates");
+const FUNDS = require("../lib/funds");
 
 const K = B.colors, F = B.fonts;
 const CAT = {tbill: K.cat_tbill, savings: K.cat_savings, synthetic: K.cat_synthetic, lending: K.cat_lending};
@@ -84,6 +85,35 @@ const CARDS = {
           h({fontFamily: F.display, fontWeight: 600, fontSize: 104, lineHeight: 1, color: K.ink, letterSpacing: -3, marginTop: 6}, tb.toFixed(2) + "%"))),
       h({gap: 16, marginTop: "auto", marginBottom: 24},
         ...b.cats.filter(c => c.count).map(c => tile(pct(c.median), c.name, tb != null && c.median != null ? pts(c.median - tb) + " vs T-bill" : null, CAT[c.id]))));
+  },
+  async funds(){
+    const b = await getBoard(), tb = b.tbill && b.tbill.rate, by = {};
+    for (const r of b.rows.filter(x => x.cat === "tbill")) {
+      const m = FUNDS.BY_META.find(([rx]) => rx.test(r.meta || "") || rx.test(r.symbol)), sym = r.symbol.toUpperCase();
+      const k = m ? m[1] : FUNDS.ALIAS[sym] || sym;
+      if (!FUNDS.SHORT[k]) continue;
+      const e = by[k] || (by[k] = {k, tvl: 0, w: 0});
+      e.tvl += r.tvl; if (r.apy30 != null) e.w += r.apy30 * r.tvl;
+    }
+    const top = Object.values(by).sort((a, c) => c.tvl - a.tvl).slice(0, 5);
+    const US = {yes: ["Open", K.up], limited: [null, K.ink], no: ["No", K.muted]};
+    return frame("Tokenized T-bill funds", "/funds",
+      h({justifyContent: "space-between", alignItems: "center", marginTop: 26, flex: 1},
+        h({flexDirection: "column", maxWidth: 470},
+          h({fontFamily: F.display, fontWeight: 500, fontSize: 62, lineHeight: 1.04, letterSpacing: -1.5}, "Who can buy which T-bill fund?"),
+          h({fontSize: 24, color: K.muted, marginTop: 16, lineHeight: 1.3}, `${Object.keys(FUNDS.FUNDS).length} funds: yield, who may buy, minimum and fees${tb != null ? `, against the ${tb.toFixed(2)}% T-bill rate` : ""}.`)),
+        h({flexDirection: "column", width: 560, backgroundColor: K.panel, border: `1px solid ${K.line}`, borderRadius: 14, padding: "10px 22px"},
+          h({fontFamily: F.mono, fontWeight: 500, fontSize: 15, letterSpacing: 1.5, color: K.muted, textTransform: "uppercase", padding: "8px 0", borderBottom: `1.5px solid ${K.ink}`},
+            h({width: 130}, "Fund"), h({width: 120, justifyContent: "flex-end"}, "30d APY"), h({width: 150, justifyContent: "flex-end"}, "Minimum"), h({width: 120, justifyContent: "flex-end"}, "US")),
+          ...top.map((e, i) => {
+            const s = FUNDS.SHORT[e.k], [ut0, uc] = US[s.us], ut = ut0 || s.usText.replace(/ (purchasers|investors) only$/, " only");
+            return h({alignItems: "center", padding: "11px 0", borderBottom: i < top.length - 1 ? `1px solid ${K.line}` : "none", fontSize: 22},
+              h({width: 130, fontWeight: 500}, e.k === "MTBILL" ? "mTBILL" : e.k),
+              h({width: 120, justifyContent: "flex-end", fontFamily: F.mono, fontWeight: 500}, pct(e.tvl ? e.w / e.tvl : null)),
+              h({width: 150, justifyContent: "flex-end", fontFamily: F.mono, fontWeight: 500, color: K.muted}, s.minText.replace(/ \(.*\)$/, "")),
+              h({width: 120, justifyContent: "flex-end", fontSize: 17, color: uc}, ut));
+          }))),
+      h({height: 16}));
   },
   async y(q){
     const b = await getBoard(), s = String(q.s || "").toLowerCase(), r = s && b.rows.find(x => x.slug === s);

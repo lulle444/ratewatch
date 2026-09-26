@@ -36,7 +36,7 @@ LOGO = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64
 """
 open(os.path.join(ROOT, "assets", "logo-mark.svg"), "w").write(LOGO)
 
-NAV = [("/", "Rates"), ("/calculator", "Calculator"), ("/alerts", "Alerts"), ("/learn", "Learn"), ("/about", "About")]
+NAV = [("/", "Rates"), ("/funds", "Funds"), ("/calculator", "Calculator"), ("/alerts", "Alerts"), ("/learn", "Learn"), ("/about", "About")]
 BOT = str(B.get("telegram") or "").lstrip("@")
 XLINK = f'<a class="navx" href="https://x.com/{B["x"]}" target="_blank" rel="noopener me" aria-label="Follow {{{{name}}}} on X">X</a>' if B.get("x") else ""
 
@@ -251,9 +251,12 @@ for f, path, title, desc, body in PAGES:
 
 # One page per dollar yield, /y/ethena-susde: api/yield.js fills the __KEYS__ in this template with the yield's numbers.
 os.makedirs(os.path.join(ROOT, "templates"), exist_ok=True)
+open(os.path.join(ROOT, "templates", "funds.html"), "w").write(page("/funds", "Tokenized T-bill funds compared: who can buy, minimums and yields · {{name}}",
+    "Every tokenized T-bill fund side by side: its yield against the T-bill rate, who is allowed to buy it, the minimum, fees and how you get your dollars back.",
+    "__MAIN__", og="/api/og?p=funds", kind="funds"))
 open(os.path.join(ROOT, "templates", "yield.html"), "w").write(page("/y/__SLUG__", "__TITLE__", "__DESC__", "__MAIN__", og="/api/og?p=y&amp;s=__SLUG__", kind="yield"))
 
 open(os.path.join(ROOT, "sitemap.xml"), "w").write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
-    "".join(f"  <url><loc>{SITE}{p if p != '/' else ''}</loc></url>\n" for _, p, *_ in PAGES if p != "/404") + "</urlset>\n")
+    "".join(f"  <url><loc>{SITE}{p if p != '/' else ''}</loc></url>\n" for _, p, *_ in PAGES if p != "/404") + f"  <url><loc>{SITE}/funds</loc></url>\n</urlset>\n")
 open(os.path.join(ROOT, "robots.txt"), "w").write(f"User-agent: *\nAllow: /\nSitemap: {SITE}/sitemap.xml\nSitemap: {SITE}/sitemap-yields.xml\n")
 print("built", ", ".join(p[0] for p in PAGES))

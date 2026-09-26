@@ -2,15 +2,37 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "functions": {
-    "api/og.js": {"includeFiles": "assets/logo-mark.svg"},
-    "api/yield.js": {"includeFiles": "{templates/yield.html,404.html}"}
+    "api/og.js": {
+      "includeFiles": "assets/logo-mark.svg"
+    },
+    "api/yield.js": {
+      "includeFiles": "{templates/yield.html,templates/funds.html,404.html}"
+    }
   },
   "rewrites": [
-    {"source": "/y/:s", "destination": "/api/yield?s=:s"},
-    {"source": "/sitemap-yields.xml", "destination": "/api/yield?sitemap=1"}
+    {
+      "source": "/funds",
+      "destination": "/api/yield?p=funds"
+    },
+    {
+      "source": "/y/:s",
+      "destination": "/api/yield?s=:s"
+    },
+    {
+      "source": "/sitemap-yields.xml",
+      "destination": "/api/yield?sitemap=1"
+    }
   ],
   "redirects": [
-    {"source": "/y", "destination": "/", "permanent": false},
-    {"source": "/templates/:path*", "destination": "/", "permanent": false}
+    {
+      "source": "/y",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/templates/:path*",
+      "destination": "/",
+      "permanent": false
+    }
   ]
 }

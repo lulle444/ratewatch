@@ -252,3 +252,18 @@ function renderLearn(){
       ${c.top.length ? `<p>Highest right now: ${c.top.map(t => `${esc(t.name)} ${esc(t.symbol)} (${pct(t.apy30)})`).join(", ")}.</p>` : ""}
     </article>`).join("");
 }
+
+/* ---------- funds ---------- */
+if ($("fundChips")){
+  $("fundChips").addEventListener("click", e => {
+    const b = e.target.closest("button[data-f]");
+    if (!b) return;
+    document.querySelectorAll("#fundChips button").forEach(x => x.setAttribute("aria-pressed", x === b));
+    let shown = 0;
+    document.querySelectorAll(".ft tbody tr").forEach(tr => {
+      const ok = b.dataset.f === "all" || (b.dataset.f === "us" ? tr.dataset.us === "yes" : +tr.dataset.min < 1000);
+      tr.hidden = !ok; shown += ok;
+    });
+    $("fundsNone").hidden = shown > 0;
+  });
+}

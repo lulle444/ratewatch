@@ -224,3 +224,25 @@ button{font:inherit;color:inherit}
 .ylink .r{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
 .yrel .block{margin-top:22px}
 .dside .pagelink{font-size:13.5px;font-weight:600;color:var(--ink)}
+
+/* funds comparison */
+.ft td{vertical-align:top;font-size:14px}
+.ft td .tok b a{text-decoration:none;border-bottom:1px solid var(--line)}
+.ft td .tok b a:hover{border-bottom-color:var(--ink)}
+.ft .small{font-size:12.5px}
+.who{display:inline-block;font:500 12px var(--mono);border-radius:999px;padding:2px 9px;border:1px solid var(--line);white-space:nowrap}
+.who.pos{color:var(--up);border-color:currentColor}
+.who.mid{color:var(--ink)}
+.who.neg{color:var(--muted)}
+@media (max-width:860px){
+  .ft thead{display:none}
+  .ft,.ft tbody,.ft tr,.ft td{display:block}
+  .ft tr{border-bottom:1px solid var(--line);padding:12px 0}
+  .ft tr[hidden]{display:none}
+  .ft td{border:0;padding:3px 0;text-align:left!important;display:grid;grid-template-columns:118px minmax(0,1fr);gap:10px}
+  .ft td::before{content:attr(data-l);font:500 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding-top:2px}
+  .ft td:first-child{display:block;padding-bottom:6px}
+  .ft td:first-child::before{content:none}
+  .ft td:empty{display:none}
+  .ft td>*{justify-self:start}
+}

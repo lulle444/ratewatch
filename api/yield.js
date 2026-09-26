@@ -9,7 +9,7 @@ const FUNDS = require("../lib/funds");
 const SITE = "https://" + B.domain;
 const BOT = String(B.telegram || "").replace(/^@/, "");
 const read = f => fs.readFileSync(path.join(__dirname, "..", f), "utf8");
-let TPL, NOTFOUND;
+let TPL, FTPL, NOTFOUND;
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
 const pct = v => v == null || !isFinite(v) ? "–" : v.toFixed(2) + "%";
@@ -108,6 +108,85 @@ ${hold(r.cat === "tbill" && fundOf(r))}
 `;
 }
 
+// /funds: every tokenized T-bill fund side by side, live rate next to who may buy it. Funds whose pools DefiLlama
+// splits in two (BUIDL, JTRSY) are added up; funds DefiLlama doesn't track still show their terms.
+function fundsMain(board){
+  const tb = board.tbill, by = {}, loose = [];
+  for (const r of board.rows.filter(x => x.cat === "tbill")) {
+    const f = fundOf(r), k = f && Object.keys(FUNDS.FUNDS).find(k => FUNDS.FUNDS[k] === f);
+    if (!k) { loose.push(r); continue; }
+    (by[k] = by[k] || []).push(r);
+  }
+  const items = Object.keys(FUNDS.FUNDS).map(k => {
+    const rs = (by[k] || []).sort((a, b) => b.tvl - a.tvl), tvl = rs.reduce((t, r) => t + r.tvl, 0);
+    const w = rs.filter(r => r.apy30 != null), wt = w.reduce((t, r) => t + r.tvl, 0);
+    const apy30 = w.length ? w.reduce((t, r) => t + r.apy30 * r.tvl, 0) / (wt || 1) : null;
+    return {k, f: FUNDS.FUNDS[k], s: FUNDS.SHORT[k], main: rs[0], tvl, apy30, over: apy30 != null && tb ? apy30 - tb.rate : null,
+      chains: [...new Set(rs.flatMap(r => r.chains))]};
+  }).sort((a, b) => b.tvl - a.tvl || a.s.min - b.s.min);
+  const tracked = items.filter(i => i.main), open = items.filter(i => i.s.us === "yes");
+  const typical = (() => { const v = tracked.map(i => i.apy30).filter(x => x != null).sort((a, b) => a - b); return v.length ? v[v.length >> 1] : null; })();
+  const who = {yes: "pos", limited: "mid", no: "neg"};
+  const row = i => {
+    const name = esc(i.f.name.replace(/\s*\(.*?\)|\s*\/.*$|,.*$/g, ""));
+    const tick = esc(i.k === "MTBILL" ? "mTBILL" : i.k);
+    const title = i.main ? `<a href="/y/${esc(i.main.slug)}">${tick}</a>` : tick;
+    return `<tr data-us="${i.s.us}" data-min="${i.s.min}">
+      <td data-l="Fund"><span class="tok"><b>${title}</b><small>${name}</small></span></td>
+      <td class="r" data-l="30-day APY">${i.main ? `<span class="apy">${pct(i.apy30)}</span>` : '<span class="muted small">Not on DefiLlama</span>'}</td>
+      <td class="r" data-l="vs T-bill">${i.main ? `<span class="over ${overCls(i.over)}">${pts(i.over)}</span>` : ""}</td>
+      <td class="r" data-l="Deposits">${i.main ? `<span class="num">${usd(i.tvl)}</span>` : ""}</td>
+      <td data-l="Who can buy">${esc(i.s.buyers)}</td>
+      <td data-l="US persons"><span class="who ${who[i.s.us]}">${esc(i.s.usText)}</span></td>
+      <td data-l="Minimum" class="num">${esc(i.s.minText)}</td>
+      <td data-l="Getting out">${esc(i.s.out)}</td>
+      <td data-l="Fee">${esc(i.s.fee)}</td>
+    </tr>`;
+  };
+  const words = [
+    ["Accredited investor", "A US test of wealth: over $1M net worth without your home, or over $200k income ($300k with a spouse) in each of the last two years."],
+    ["Qualified purchaser", "A stricter US test: at least $5M in investments for a person, $25M for most companies. Funds that only take them can skip SEC fund registration."],
+    ["Professional investor", "The non-US version, set by each country. In the BVI and the EU it usually means large portfolios, big companies or regulated firms."],
+    ["KYC and allowlists", "Every fund checks who you are first. Most also only let the token move between wallets they have approved, so you can’t just buy it on a DEX."],
+  ];
+  return `  <section class="pagehead">
+    <p class="eyebrow">Tokenized T-bill funds</p>
+    <h1>Who can buy which <em>T-bill fund?</em></h1>
+    <p class="lede">Every tokenized T-bill fund we track, side by side: what it pays against the T-bill rate, who is allowed to buy it, how much you need and how you get your dollars back. Terms come from each issuer’s own documents, checked ${esc(day(FUNDS.CHECKED))}.</p>
+  </section>
+
+  <section class="ystats" aria-label="The funds in numbers">
+    ${stat(String(items.length), "funds compared")}
+    ${stat(usd(tracked.reduce((t, i) => t + i.tvl, 0)), "deposited on chain")}
+    ${stat(pct(typical), tb ? `typical 30-day APY (T-bill ${pct(tb.rate)})` : "typical 30-day APY")}
+    ${stat(String(open.length), `open to US retail (${esc(list(open.map(i => i.k)))})`)}
+  </section>
+
+  <section class="panel board fundsbox" aria-labelledby="fundsH">
+    <div class="sectionhead"><div><h2 id="fundsH">The funds</h2><p class="sub">Largest first. Rates are 30-day averages from DefiLlama; tap a fund for its chart and full terms.</p></div></div>
+    <div class="chips" id="fundChips">
+      <button class="chip" data-f="all" aria-pressed="true">All funds</button>
+      <button class="chip" data-f="us" aria-pressed="false">Open to US retail</button>
+      <button class="chip" data-f="small" aria-pressed="false">Start under $1,000</button>
+    </div>
+    <div class="tablebox"><table class="rt ft">
+      <thead><tr><th>Fund</th><th class="r">30-day APY</th><th class="r">vs T-bill</th><th class="r">Deposits</th><th>Who can buy</th><th>US persons</th><th>Minimum</th><th>Getting out</th><th>Fee</th></tr></thead>
+      <tbody>${items.map(row).join("")}</tbody>
+    </table></div>
+    <p class="empty" id="fundsNone" hidden>No fund matches that.</p>
+    ${loose.length ? `<p class="fine">Also on the rate board, terms not checked yet: ${loose.map(r => `<a href="/y/${esc(r.slug)}">${esc(r.name + " " + r.symbol)}</a>`).join(", ")}.</p>` : ""}
+  </section>
+
+  <section class="panel yhold" aria-labelledby="wordsH">
+    <div class="sectionhead"><div><h2 id="wordsH">The words that decide who can buy</h2><p class="sub">Most of these funds are securities, so the law limits who may hold them.</p></div></div>
+    <dl class="facts2">${words.map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>
+    <p class="fine">A summary, not legal advice. The fund’s own documents decide, and terms change.</p>
+  </section>
+
+  <p class="block"><a class="btn" href="/">See every dollar yield</a></p>
+`;
+}
+
 function page(r, board){
   const sum = summary(r, board.tbill);
   const t = `${label(r)}: APY and history vs T-bills · ${B.name}`;
@@ -134,6 +213,14 @@ module.exports = async function handler(req, res){
     res.setHeader("Cache-Control", "public, s-maxage=21600, stale-while-revalidate=86400");
     return res.status(200).send('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
       rows.map(r => `  <url><loc>${SITE}/y/${esc(r.slug)}</loc></url>\n`).join("") + "</urlset>\n");
+  }
+
+  if (q.p === "funds"){
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    if (!rows.length){ res.setHeader("Cache-Control", "no-store"); return res.status(503).send(read("404.html").replace("The link may be old or mistyped.", "Rates are unavailable right now. Please try again in a minute.")); }
+    FTPL = FTPL || read("templates/funds.html");
+    res.setHeader("Cache-Control", "public, s-maxage=900, stale-while-revalidate=86400");
+    return res.status(200).send(FTPL.replace("__MAIN__", () => fundsMain(board)));
   }
 
   const want = String(q.s || "").slice(0, 100), low = want.toLowerCase();
