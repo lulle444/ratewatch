@@ -84,7 +84,7 @@ def page(path, title, desc, body, og="/api/og?p=home", kind=None):
   <footer class="foot">
     <div><a class="logo small" href="/"><img src="/assets/logo-mark.svg" alt="" width="24" height="24"><span class="word">{{{{w1}}}}<i>{{{{w2}}}}</i></span></a>
       <p>{{{{tagline}}}}</p></div>
-    <nav aria-label="Footer">{"".join(f'<a href="{h}">{t}</a>' for h, t in NAV)}</nav>
+    <nav aria-label="Footer">{"".join(f'<a href="{h}">{t}</a>' for h, t in NAV[:2] + [("/premium", "Risk premium")] + NAV[2:])}</nav>
     <nav class="coinnav" aria-label="Yields by coin"><span>By coin</span>{"".join(f'<a href="/{c}">{n}</a>' for c, n in COINS)}</nav>
     <p class="fine">Yields from <a href="https://defillama.com/yields" target="_blank" rel="noopener">DefiLlama</a>. The T-bill rate from <a href="https://fred.stlouisfed.org/series/DGS3MO" target="_blank" rel="noopener">FRED</a> and the <a href="https://home.treasury.gov/resource-center/data-chart-center/interest-rates" target="_blank" rel="noopener">US Treasury</a>. No paid placements. Not financial advice. Sister sites: <a href="https://tidewatch-olive.vercel.app" target="_blank" rel="noopener">Tidewatch</a> and <a href="https://usepegwatch.vercel.app" target="_blank" rel="noopener">Pegwatch</a>.</p>
   </footer>
@@ -136,6 +136,7 @@ HOME = """  <section class="hero">
   </section>
 
   <section class="cats" id="cats" aria-label="What pays the yield"></section>
+  <p class="catsmore"><a href="/premium">What has each type paid over T-bills this past year? →</a></p>
 
   <section class="panel ladder" aria-labelledby="ladderH">
     <div class="sectionhead"><div><h2 id="ladderH">The yield ladder</h2><p class="sub" id="ladderSub">Each dot is one dollar yield, placed at its 30-day average APY. The dashed line is the T-bill rate.</p></div></div>
@@ -260,16 +261,38 @@ NOTFOUND = head("404", "That page <em>isn’t here.</em>", "The link may be old 
   <p class="block"><a class="btn primary" href="/">See every dollar yield</a></p>
 """
 
+PREMIUM = head("Risk premium", "What has risk <em>paid?</em>",
+            "Every dollar yield above the T-bill rate is paid for with risk. Here is how much extra each type of yield has paid over the 3-month US T-bill rate for the past year, day by day. Below zero, you took on more risk for less than the government pays.") + """
+  <section class="cats premcats" id="premTiles" aria-label="Extra over T-bills by type"><p class="empty">Loading a year of rates…</p></section>
+
+  <section class="panel ychart" aria-labelledby="premH">
+    <div class="sectionhead">
+      <div><h2 id="premH">Extra yield over the T-bill rate</h2><p class="sub">Each line is one type of dollar yield minus the 3-month T-bill rate, in percentage points. The dashed line at zero is the T-bill rate itself.</p></div>
+      <div class="seg" role="group" aria-label="Time range"><button data-pdays="90">3M</button><button data-pdays="180">6M</button><button data-pdays="365" aria-pressed="true">1Y</button></div>
+    </div>
+    <div class="legend" id="premLegend"></div>
+    <div class="dchart" id="premChart"><p class="empty">Loading a year of rates…</p></div>
+    <p class="fine" id="premHow">Each type’s line is the deposit-weighted APY of its largest yields, averaged over 7 days, from DefiLlama’s daily history. The T-bill rate is FRED’s 3-month series.</p>
+  </section>
+
+  <section class="twocol">
+    <article class="panel note"><h3>Why the extra exists</h3><p>Nobody pays more than the US government without a reason. Lending carries the risk that borrowers’ collateral falls faster than it can be sold. Synthetic dollars depend on futures funding rates that can turn negative. Savings rates are set by protocols that can change them. T-bill funds usually sit just below the line because of their fees.</p></article>
+    <article class="panel note"><h3>How to read it</h3><p>A line well above zero means that type is paying a lot for its risk right now, often because demand to borrow is high. A line close to zero means you are taking the risk for little extra. The gap moves with crypto markets, not with the Fed.</p></article>
+  </section>
+  <p class="block"><a class="btn" href="/">See every dollar yield</a> <a class="btn" href="/learn">Where the yield comes from</a></p>
+"""
+
 PAGES = [
     ("index.html", "/", "{{name}}: what a dollar earns on chain", B["description"], HOME),
     ("calculator.html", "/calculator", "Dollar yield calculator · {{name}}", "What your dollars would earn in tokenized T-bills, savings rates, synthetic dollars and lending, next to the T-bill rate.", CALC),
     ("alerts.html", "/alerts", "Rate alerts · {{name}}", "Free Telegram alerts when a dollar yield on chain crosses your level or the T-bill rate moves, plus a weekly digest.", ALERTS_ON if BOT else ALERTS_SOON),
+    ("premium.html", "/premium", "Risk premium: what dollar yields paid over T-bills this year · {{name}}", "How much extra T-bill funds, savings rates, synthetic dollars and lending have paid over the 3-month T-bill rate, day by day for the past year.", PREMIUM, "/api/og?p=premium"),
     ("learn.html", "/learn", "Where dollar yield comes from · {{name}}", "T-bill funds, savings rates, synthetic dollars and lending: who pays the yield, and what you take on to earn it.", LEARN),
     ("about.html", "/about", "About · {{name}}", "What {{name}} is and where its numbers come from.", ABOUT),
     ("404.html", "/404", "Not found · {{name}}", "That page isn’t here.", NOTFOUND),
 ]
-for f, path, title, desc, body in PAGES:
-    open(os.path.join(ROOT, f), "w").write(page(path, fill(title), fill(desc), fill(body), og="/api/og?p=home" if path == "/" else "/assets/og.png"))
+for f, path, title, desc, body, *og in PAGES:
+    open(os.path.join(ROOT, f), "w").write(page(path, fill(title), fill(desc), fill(body), og=og[0] if og else "/api/og?p=home" if path == "/" else "/assets/og.png"))
 
 # One page per dollar yield, /y/ethena-susde: api/yield.js fills the __KEYS__ in this template with the yield's numbers.
 os.makedirs(os.path.join(ROOT, "templates"), exist_ok=True)

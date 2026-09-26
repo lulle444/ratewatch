@@ -30,6 +30,8 @@ jobs:
             curl -sS -m 60 -o /dev/null "$SITE/api/og?p=y&s=$S" -w "share image: HTTP %{http_code} %{content_type} %{size_download}B %{redirect_url}\n" &&
             curl -sS -m 60 -o /dev/null "$SITE/api/og?p=home" -w "home image: HTTP %{http_code} %{content_type} %{size_download}B %{redirect_url}\n"
           echo "funds page: $(curl -sS -m 60 "$SITE/funds" | grep -o '<tr data-us' | wc -l) funds, $(curl -sS -m 60 -o /dev/null "$SITE/api/og?p=funds" -w 'image HTTP %{http_code} %{content_type} %{size_download}B %{redirect_url}')"
+          curl -sS -m 90 "$SITE/api/history?p=premium" | python3 -c 'import json,sys; d=json.load(sys.stdin); p=d.get("points",[]); l=p[-1] if p else {}; print("premium:", len(p), "days", d.get("error",""), {c["id"]: (round(l[c["id"]]-l["bench"],2) if l.get(c["id"]) is not None else None) for c in d.get("cats",[])}, {c["id"]: len(c["yields"]) for c in d.get("cats",[])})'
+          curl -sS -m 90 -o /dev/null "$SITE/api/og?p=premium" -w "premium image: HTTP %{http_code} %{content_type} %{size_download}B %{redirect_url}\n"
           for C in usdc usdt usds dai usde pyusd usdg gho rlusd usd1; do echo "coin /$C: $(curl -sS -m 60 -o c.html -w '%{http_code}' "$SITE/$C") $(grep -o '<a class="tok rowlink"' c.html | wc -l) yields"; done
           for F in $(cat funds 2>/dev/null); do echo "fund /y/$F: $(curl -sS -m 60 "$SITE/y/$F" | grep -c 'Who can hold it') who-can-hold section(s)"; done
           [ -f top ] && curl -sS -m 30 "$SITE/api/history?pool=$(cat top)" | python3 -c 'import json,sys; h=json.load(sys.stdin); p=h.get("points",[]); print("history:", len(p), "days", p[:1], p[-1:], h.get("error",""))'

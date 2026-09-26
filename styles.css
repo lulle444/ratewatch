@@ -202,7 +202,7 @@ button{font:inherit;color:inherit}
 /* footer */
 .foot{border-top:1px solid var(--ink);margin-top:40px;padding:26px 0 40px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px}
 .foot p{margin:8px 0 0;color:var(--muted);font-size:13.5px}
-.foot nav{display:flex;gap:16px;font-size:14px}
+.foot nav{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px}
 .foot nav a{text-decoration:none;color:var(--muted)}
 .foot .fine{grid-column:1/-1}
 @media (max-width:600px){.foot{grid-template-columns:minmax(0,1fr)}}
@@ -274,3 +274,18 @@ button{font:inherit;color:inherit}
 .foot .coinnav span{font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;padding-top:2px}
 .foot .coinnav a{color:var(--ink);text-decoration:none}
 .foot .coinnav a:hover{text-decoration:underline}
+
+/* risk premium */
+.premcats .cat{cursor:default}
+.premcats .cat:hover{transform:none}
+.premcats .big small{font-family:var(--mono);font-size:14px}
+.premcats .pavg{font:500 12px/1.4 var(--mono);margin-top:8px;color:var(--muted)}
+.premcats .empty{grid-column:1/-1}
+.dchart .zero{stroke:var(--bench);stroke-width:1.5;stroke-dasharray:5 4}
+.dchart .endlab{font:500 12px var(--body);fill:var(--ink)}
+#premChart{min-height:260px}
+#premChart .tip{white-space:nowrap;transform:translate(-50%,0)}
+#premChart .tip .sw{width:8px;height:8px}
+.catsmore{margin:-8px 0 22px;font-size:14px}
+.catsmore a{color:var(--accent);text-decoration:none;font-weight:500}
+.catsmore a:hover{text-decoration:underline}

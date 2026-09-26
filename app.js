@@ -267,3 +267,68 @@ if ($("fundChips")){
     $("fundsNone").hidden = shown > 0;
   });
 }
+
+/* ---------- risk premium ---------- */
+if ($("premChart")){
+  const P = {data: null, days: 365};
+  const day = d => new Date(d + "T12:00:00Z").toLocaleDateString("en-US", {month: "short", day: "numeric", year: "numeric", timeZone: "UTC"});
+  const tiles = () => {
+    const d = P.data, pts = d.points, last = pts[pts.length - 1];
+    $("premTiles").innerHTML = d.cats.map(c => {
+      const ex = pts.filter(p => p[c.id] != null).map(p => p[c.id] - p.bench);
+      const now = last[c.id] == null ? null : last[c.id] - last.bench, avg = ex.length ? ex.reduce((s, v) => s + v, 0) / ex.length : null;
+      const above = ex.length ? Math.round(ex.filter(v => v > 0).length / ex.length * 100) : null;
+      return `<div class="panel cat" style="--c:${catColor(c.id)}"><h3><span class="sw"></span>${esc(c.name)}</h3>
+        <p class="big num">${signed(now).replace(" pts", "")}<small> pts</small></p><p>extra over T-bills now (7-day average)</p>
+        <p class="pavg">${avg == null ? "–" : signed(avg)} on average this year${above == null ? "" : ` · above T-bills ${above}% of days`}</p></div>`;
+    }).join("");
+    $("premLegend").innerHTML = d.cats.map(c => `<span><i style="--c:${catColor(c.id)}"></i>${esc(c.name)}</span>`).join("") + `<span><i class="dash"></i>3-month T-bill (zero)</span>`;
+    $("premHow").textContent = `Each type’s line is the deposit-weighted APY of its largest yields (${d.cats.map(c => `${c.short}: ${c.yields.slice(0, 4).join(", ")}${c.yields.length > 4 ? "…" : ""}`).join("; ")}), averaged over 7 days, minus the 3-month T-bill rate from FRED. Daily history from DefiLlama.`;
+  };
+  const draw = () => {
+    const box = $("premChart"), all = P.data.points, pts = all.slice(-P.days), cats = P.data.cats;
+    if (pts.length < 10){ box.innerHTML = '<p class="empty">Not enough history yet.</p>'; return; }
+    const W = Math.max(300, box.clientWidth || 600), wide = W >= 640, H = wide ? 340 : 260, L = 44, R = wide ? 118 : 12, T = 12, B = 24;
+    const vals = pts.flatMap(p => cats.map(c => p[c.id] == null ? null : p[c.id] - p.bench)).filter(v => v != null);
+    const step = Math.max(...vals) - Math.min(...vals, 0) > 8 ? 2 : 1;
+    const lo = Math.floor(Math.min(0, ...vals) / step) * step, hi = Math.ceil(Math.max(0.5, ...vals) / step) * step;
+    const x = i => L + i / (pts.length - 1) * (W - L - R), y = v => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
+    let g = "";
+    for (let v = lo; v <= hi + 1e-9; v += step) if (v !== 0) g += `<line class="gr" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v)}</text>`;
+    g += `<line class="zero" x1="${L}" x2="${W - R}" y1="${y(0)}" y2="${y(0)}"/><text class="ax" x="${L - 6}" y="${y(0) + 4}" text-anchor="end">0</text>`;
+    const mfmt = d => new Date(d + "T12:00:00Z").toLocaleDateString("en-US", {month: "short", timeZone: "UTC"});
+    let lastM = "", lastX = -1e9;
+    pts.forEach((p, i) => { const m = mfmt(p.d); if (m !== lastM && p.d.slice(8) <= "07" && x(i) - lastX >= 44 && x(i) >= L + 12){ g += `<text class="ax" x="${x(i)}" y="${H - 6}" text-anchor="middle">${m}</text>`; lastX = x(i); } lastM = m; });
+    const line = id => { let dd = "", pen = false; pts.forEach((p, i) => { const v = p[id] == null ? null : p[id] - p.bench; if (v == null){ pen = false; return; } dd += `${pen ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`; pen = true; }); return dd; };
+    // names at the right end of each line, nudged apart so they don't overlap (wide screens only; the legend covers phones)
+    let ends = "";
+    if (wide){
+      const last = pts[pts.length - 1], labs = cats.filter(c => last[c.id] != null).map(c => ({c, y: y(last[c.id] - last.bench)})).sort((a, b) => a.y - b.y);
+      for (let i = 1; i < labs.length; i++) if (labs[i].y - labs[i - 1].y < 15) labs[i].y = labs[i - 1].y + 15;
+      ends = labs.map(l => `<circle cx="${x(pts.length - 1)}" cy="${y(last[l.c.id] - last.bench)}" r="3.5" style="fill:${catColor(l.c.id)}"/><text class="endlab" x="${x(pts.length - 1) + 10}" y="${l.y + 4}">${esc(l.c.short)}</text>`).join("");
+    }
+    box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${g}${cats.map(c => `<path class="ln" style="stroke:${catColor(c.id)}" d="${line(c.id)}"/>`).join("")}${ends}<line class="hair" y1="${T}" y2="${H - B}" visibility="hidden"/></svg><div class="tip" hidden></div>`;
+    const tip = box.querySelector(".tip"), hair = box.querySelector(".hair"), svg = box.querySelector("svg");
+    svg.addEventListener("pointermove", e => {
+      const bb = svg.getBoundingClientRect(), px = (e.clientX - bb.left) / bb.width * W;
+      const i = Math.max(0, Math.min(pts.length - 1, Math.round((px - L) / (W - L - R) * (pts.length - 1)))), p = pts[i];
+      hair.setAttribute("x1", x(i)); hair.setAttribute("x2", x(i)); hair.setAttribute("visibility", "visible");
+      tip.innerHTML = `<b>${day(p.d)}</b> · T-bill ${pct(p.bench)}<br>` + cats.filter(c => p[c.id] != null).sort((a, b) => p[b.id] - p[a.id])
+        .map(c => `<span class="sw" style="--c:${catColor(c.id)}"></span> ${esc(c.short)} ${signed(p[c.id] - p.bench)} <span>(${pct(p[c.id])})</span>`).join("<br>");
+      tip.style.left = Math.min(Math.max(x(i) / W * bb.width, 90), bb.width - 90) + "px"; tip.style.top = (T / H * bb.height + 70) + "px"; tip.hidden = false;
+    });
+    svg.addEventListener("pointerleave", () => { tip.hidden = true; hair.setAttribute("visibility", "hidden"); });
+  };
+  document.addEventListener("click", e => {
+    const b = e.target.closest("[data-pdays]");
+    if (!b || !P.data) return;
+    P.days = +b.dataset.pdays;
+    document.querySelectorAll("[data-pdays]").forEach(x => x.setAttribute("aria-pressed", x === b));
+    draw();
+  });
+  let rs; addEventListener("resize", () => { clearTimeout(rs); rs = setTimeout(() => P.data && draw(), 150); });
+  fetch("/api/history?p=premium").then(r => r.ok ? r.json() : Promise.reject(r.status)).then(d => {
+    if (!d.points || d.points.length < 10) throw new Error("short");
+    P.data = d; tiles(); draw();
+  }).catch(() => { $("premChart").innerHTML = $("premTiles").innerHTML = '<p class="empty">The history couldn’t be loaded right now. Please try again in a minute.</p>'; });
+}

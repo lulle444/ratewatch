@@ -3,7 +3,7 @@
 // Name, colors and fonts come from brand.json. Anything that fails falls back to the static assets/og.png.
 const fs = require("fs"), path = require("path");
 const B = require("../brand.json");
-const {board: getBoard} = require("../lib/rates");
+const {board: getBoard, premium: getPremium} = require("../lib/rates");
 const FUNDS = require("../lib/funds");
 const COINS = require("../lib/coins");
 
@@ -13,6 +13,7 @@ let logo;
 const logoUri = () => logo || (logo = "data:image/svg+xml;base64," + fs.readFileSync(path.join(__dirname, "..", "assets", "logo-mark.svg")).toString("base64"));
 
 const pct = v => v == null || !isFinite(v) ? "–" : v.toFixed(2) + "%";
+const pts_ = v => v == null ? "–" : (v > 0 ? "+" : v < 0 ? "−" : "±") + Math.abs(v).toFixed(2);
 const pts = v => v == null ? "–" : (v > 0 ? "+" : v < 0 ? "−" : "±") + Math.abs(v).toFixed(2) + " pts";
 const usd = v => v >= 1e9 ? "$" + (v / 1e9).toFixed(v >= 1e10 ? 0 : 1) + "B" : v >= 1e6 ? "$" + (v / 1e6).toFixed(v >= 1e8 ? 0 : 1) + "M" : "$" + Math.round((v || 0) / 1e3) + "k";
 
@@ -86,6 +87,26 @@ const CARDS = {
           h({fontFamily: F.display, fontWeight: 600, fontSize: 104, lineHeight: 1, color: K.ink, letterSpacing: -3, marginTop: 6}, tb.toFixed(2) + "%"))),
       h({gap: 16, marginTop: "auto", marginBottom: 24},
         ...b.cats.filter(c => c.count).map(c => tile(pct(c.median), c.name, tb != null && c.median != null ? pts(c.median - tb) + " vs T-bill" : null, CAT[c.id]))));
+  },
+  async premium(){
+    const d = await getPremium(), pts = d.points;
+    if (!pts || pts.length < 30) return null;
+    const last = pts[pts.length - 1];
+    // a small line chart of each type's extra over T-bills, with the zero line dashed
+    const CW = 1072, CH = 250, ex = pts.flatMap(p => d.cats.map(c => p[c.id] == null ? null : p[c.id] - p.bench)).filter(v => v != null);
+    const lo = Math.min(0, ...ex), hi = Math.max(0.5, ...ex), X = i => i / (pts.length - 1) * CW, Y = v => (1 - (v - lo) / (hi - lo)) * CH;
+    const path = id => { let s = "", pen = false; pts.forEach((p, i) => { const v = p[id] == null ? null : p[id] - p.bench; if (v == null){ pen = false; return; } s += `${pen ? "L" : "M"}${X(i).toFixed(1)},${Y(v).toFixed(1)}`; pen = true; }); return s; };
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${CW}" height="${CH}" viewBox="0 0 ${CW} ${CH}"><line x1="0" x2="${CW}" y1="${Y(0)}" y2="${Y(0)}" stroke="${K.bench}" stroke-width="2" stroke-dasharray="7 6"/>${d.cats.map(c => `<path d="${path(c.id)}" fill="none" stroke="${CAT[c.id]}" stroke-width="3.5" stroke-linejoin="round"/>`).join("")}</svg>`;
+    return frame("Risk premium · 1 year", "/premium",
+      h({justifyContent: "space-between", alignItems: "flex-end", marginTop: 22},
+        h({fontFamily: F.display, fontWeight: 500, fontSize: 58, lineHeight: 1.04, letterSpacing: -1.5}, "What has risk paid?"),
+        h({gap: 22, marginBottom: 6},
+          ...d.cats.map(c => h({flexDirection: "column", alignItems: "flex-end"},
+            h({fontSize: 16, color: K.muted}, h({width: 10, height: 10, borderRadius: 5, backgroundColor: CAT[c.id], marginTop: 6, marginRight: 7}), c.short),
+            h({fontFamily: F.mono, fontWeight: 500, fontSize: 26}, last[c.id] == null ? "–" : pts_(last[c.id] - last.bench)))))),
+      h({marginTop: 22, flexDirection: "column"},
+        {type: "img", props: {src: "data:image/svg+xml;base64," + Buffer.from(svg).toString("base64"), width: CW, height: CH}},
+        h({fontSize: 16, color: K.muted, marginTop: 8, justifyContent: "space-between"}, h({}, "Extra APY over the 3-month T-bill rate, 7-day average, past year"), h({}, "Dashed line = T-bill rate"))));
   },
   async coin(q){
     const b = await getBoard(), tb = b.tbill && b.tbill.rate, coin = COINS.COINS.find(c => c.id === String(q.c || "").toLowerCase());
