@@ -25,16 +25,21 @@
 <link rel="stylesheet" href="/brand.css">
 </head>
 <body data-page="calculator" data-bot="useRatewatchBot">
+<canvas id="tape" aria-hidden="true"></canvas>
 <div class="wrap">
   <header class="nav">
     <a class="logo" href="/" aria-label="Ratewatch home"><img src="/assets/logo-mark.svg" alt="" width="34" height="34"><span class="word">Rate<i>watch</i></span></a>
     <nav class="navlinks" aria-label="Main"><a href="/">Rates</a><a href="/funds">Funds</a><a href="/calculator" aria-current="page">Calculator</a><a href="/alerts">Alerts</a><a href="/learn">Learn</a><a href="/about">About</a></nav>
     <div class="navright"><span class="bench-pill" id="benchPill" title="3-month US T-bill rate"><small>T-bill</small> <b class="num" id="benchPillRate">–</b></span></div>
   </header>
-  <section class="pagehead">
+  <section class="pagehead hasart">
+    <div>
     <p class="eyebrow">Calculator</p>
     <h1>What would <em>your dollars</em> earn?</h1>
     <p class="lede">Pick an amount and a time. We show what the top dollar yields of each type would pay at their 30-day average, next to parking it in T-bills.</p>
+    </div><figure class="art">
+      <img src="/assets/brand/steps-1100.webp" srcset="/assets/brand/steps-640.webp 640w, /assets/brand/steps-1100.webp 1100w" sizes="(max-width:860px) 100vw, 520px" width="1100" height="705" alt="Stacks of coins on rising steps, the taller ones past a line" fetchpriority="high">
+    </figure>
   </section>
   <section class="panel calc" aria-label="Calculator">
     <div class="calcform">
@@ -53,6 +58,7 @@
     <p class="fine">Yields from <a href="https://defillama.com/yields" target="_blank" rel="noopener">DefiLlama</a>. The T-bill rate from <a href="https://fred.stlouisfed.org/series/DGS3MO" target="_blank" rel="noopener">FRED</a> and the <a href="https://home.treasury.gov/resource-center/data-chart-center/interest-rates" target="_blank" rel="noopener">US Treasury</a>. No paid placements. Not financial advice. Sister sites: <a href="https://tidewatch-olive.vercel.app" target="_blank" rel="noopener">Tidewatch</a> and <a href="https://usepegwatch.vercel.app" target="_blank" rel="noopener">Pegwatch</a>.</p>
   </footer>
 </div>
+<script src="/bg.js" defer></script>
 <script src="/app.js" defer></script>
 </body>
 </html>

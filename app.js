@@ -13,7 +13,7 @@ const S = {data: null, cat: "all", chain: "all", q: "", sort: "tvl", dir: -1, li
 const catOf = id => (S.data.cats.find(c => c.id === id) || {name: id, short: id});
 const overCls = v => v == null ? "flat" : v > 0.25 ? "pos" : v < -0.25 ? "neg" : "flat";
 
-fetch("/api/rates").then(r => r.ok ? r.json() : Promise.reject(r.status)).then(d => { S.data = d; render(); })
+fetch("/api/rates").then(r => r.ok ? r.json() : Promise.reject(r.status)).then(d => { S.data = d; render(); document.dispatchEvent(new CustomEvent("rw:data", {detail: d})); })
   .catch(() => {
     const msg = "Rates couldn’t be loaded right now. Please try again in a minute.";
     if ($("rows")) $("rows").innerHTML = `<tr><td colspan="6" class="empty">${msg}</td></tr>`;

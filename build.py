@@ -71,6 +71,7 @@ def page(path, title, desc, body, og="/api/og?p=home", kind=None):
 <link rel="stylesheet" href="/brand.css">
 </head>
 <body data-page="{kind or path.strip('/') or 'home'}" data-bot="{BOT}">
+<canvas id="tape" aria-hidden="true"></canvas>
 <div class="wrap">
   <header class="nav">
     <a class="logo" href="/" aria-label="{{{{name}}}} home"><img src="/assets/logo-mark.svg" alt="" width="34" height="34"><span class="word">{{{{w1}}}}<i>{{{{w2}}}}</i></span></a>
@@ -85,17 +86,34 @@ def page(path, title, desc, body, og="/api/og?p=home", kind=None):
     <p class="fine">Yields from <a href="https://defillama.com/yields" target="_blank" rel="noopener">DefiLlama</a>. The T-bill rate from <a href="https://fred.stlouisfed.org/series/DGS3MO" target="_blank" rel="noopener">FRED</a> and the <a href="https://home.treasury.gov/resource-center/data-chart-center/interest-rates" target="_blank" rel="noopener">US Treasury</a>. No paid placements. Not financial advice. Sister sites: <a href="https://tidewatch-olive.vercel.app" target="_blank" rel="noopener">Tidewatch</a> and <a href="https://usepegwatch.vercel.app" target="_blank" rel="noopener">Pegwatch</a>.</p>
   </footer>
 </div>
+<script src="/bg.js" defer></script>
 <script src="/app.js" defer></script>
 </body>
 </html>
 """)
 
 
-def head(eyebrow, h1, lede):
-    return f"""  <section class="pagehead">
+# Louise's renders (assets/brand, cropped to the objects on the right of each banner). alt text says what they show.
+ART = {
+    "gauge": "A rate dial with its needle in the green, beside stacks of green coins",
+    "chain": "Three chain links on a plinth beside two stacks of green coins",
+    "steps": "Stacks of coins on rising steps, the taller ones past a line",
+}
+
+
+def art(name, extra="", priority=False):
+    return f"""<figure class="art">
+      <img src="/assets/brand/{name}-1100.webp" srcset="/assets/brand/{name}-640.webp 640w, /assets/brand/{name}-1100.webp 1100w" sizes="(max-width:860px) 100vw, 520px" width="1100" height="705" alt="{ART[name]}"{' fetchpriority="high"' if priority else ' loading="lazy"'}>{extra}
+    </figure>"""
+
+
+def head(eyebrow, h1, lede, pic=None):
+    return f"""  <section class="pagehead{' hasart' if pic else ''}">
+    <div>
     <p class="eyebrow">{eyebrow}</p>
     <h1>{h1}</h1>
     <p class="lede">{lede}</p>
+    </div>{art(pic, priority=True) if pic else ""}
   </section>"""
 
 
@@ -105,12 +123,13 @@ HOME = """  <section class="hero">
       <h1>What does a dollar <em>earn on chain?</em></h1>
       <p class="lede">Every tokenized T-bill fund, savings rate, synthetic dollar and deep lending market, held against the rate the US government pays. Anything above that line is paid for with risk.</p>
     </div>
-    <aside class="bench panel" aria-live="polite">
-      <p class="eyebrow">The line to beat</p>
-      <p class="bench-rate"><span class="num" id="benchRate">–</span><small>%</small></p>
-      <p class="bench-name">3-month US T-bill</p>
-      <p class="bench-sub" id="benchSub">Loading…</p>
-    </aside>
+""" + art("gauge", """
+      <aside class="bench panel" aria-live="polite">
+        <p class="eyebrow">The line to beat</p>
+        <p class="bench-rate"><span class="num" id="benchRate">–</span><small>%</small></p>
+        <p class="bench-name">3-month US T-bill</p>
+        <p class="bench-sub" id="benchSub">Loading…</p>
+      </aside>""", priority=True) + """
   </section>
 
   <section class="cats" id="cats" aria-label="What pays the yield"></section>
@@ -148,7 +167,7 @@ HOME = """  <section class="hero">
 """
 
 CALC = head("Calculator", "What would <em>your dollars</em> earn?",
-            "Pick an amount and a time. We show what the top dollar yields of each type would pay at their 30-day average, next to parking it in T-bills.") + """
+            "Pick an amount and a time. We show what the top dollar yields of each type would pay at their 30-day average, next to parking it in T-bills.", pic="steps") + """
   <section class="panel calc" aria-label="Calculator">
     <div class="calcform">
       <label><span>Amount (USD)</span><input id="cAmt" type="number" inputmode="decimal" min="0" step="100" value="10000"></label>

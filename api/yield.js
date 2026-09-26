@@ -149,10 +149,15 @@ function fundsMain(board){
     ["Professional investor", "The non-US version, set by each country. In the BVI and the EU it usually means large portfolios, big companies or regulated firms."],
     ["KYC and allowlists", "Every fund checks who you are first. Most also only let the token move between wallets they have approved, so you can’t just buy it on a DEX."],
   ];
-  return `  <section class="pagehead">
+  return `  <section class="pagehead hasart">
+    <div>
     <p class="eyebrow">Tokenized T-bill funds</p>
     <h1>Who can buy which <em>T-bill fund?</em></h1>
     <p class="lede">Every tokenized T-bill fund we track, side by side: what it pays against the T-bill rate, who is allowed to buy it, how much you need and how you get your dollars back. Terms come from each issuer’s own documents, checked ${esc(day(FUNDS.CHECKED))}.</p>
+    </div>
+    <figure class="art">
+      <img src="/assets/brand/chain-1100.webp" srcset="/assets/brand/chain-640.webp 640w, /assets/brand/chain-1100.webp 1100w" sizes="(max-width:860px) 100vw, 520px" width="1100" height="705" alt="Three chain links on a plinth beside two stacks of green coins" fetchpriority="high">
+    </figure>
   </section>
 
   <section class="ystats" aria-label="The funds in numbers">
