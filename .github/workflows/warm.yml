@@ -11,7 +11,7 @@ jobs:
       - name: Rates
         run: |
           set +e
-          SITE="${{ vars.SITE_URL || 'https://ratewatch.vercel.app' }}"
+          SITE="${{ vars.SITE_URL || 'https://ratewatch-lemon.vercel.app' }}"
           curl -sS -m 60 "$SITE/api/rates" -o rates.json -w 'HTTP %{http_code} in %{time_total}s\n'
           python3 - <<'PY'
           import json

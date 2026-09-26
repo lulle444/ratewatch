@@ -4,7 +4,7 @@
   "wordmark": ["Rate", "watch"],
   "tagline": "What a dollar earns on chain, held against the T-bill rate.",
   "description": "Every tokenized T-bill fund, savings rate, synthetic dollar and deep stablecoin lending market on every chain, compared live against the 3-month US T-bill rate.",
-  "domain": "ratewatch.vercel.app",
+  "domain": "ratewatch-lemon.vercel.app",
   "x": "",
   "colors": {
     "bg": "#F4F1E8",

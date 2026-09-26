@@ -118,7 +118,7 @@ function renderBoard(){
   $("rows").innerHTML = shown.length ? shown.map(r => {
     const c = catOf(r.cat), open = S.open === r.id;
     return `<tr class="row" data-id="${esc(r.id)}" aria-expanded="${open}" tabindex="0">
-      <td><div class="tok"><b>${esc(r.name)} <span class="muted">${esc(r.symbol)}</span></b>
+      <td><div class="tok"><b>${esc(r.name)} <span class="muted">${esc(r.symbol)}</span></b>${r.meta ? `<small>${esc(r.meta)}</small>` : ""}
         <span class="chains">${r.chains.slice(0, 4).map(ch => `<span class="ch${/^Robinhood/.test(ch) ? " rh" : ""}">${esc(ch)}</span>`).join("")}${r.chains.length > 4 ? `<span class="ch">+${r.chains.length - 4}</span>` : ""}</span></div></td>
       <td class="hm"><span class="type"><span class="sw" style="--c:${catColor(r.cat)}"></span>${esc(c.short)}</span></td>
       <td class="r"><span class="apy">${pct(r.apy30)}</span></td>
