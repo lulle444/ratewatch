@@ -2,6 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://ratewatch-lemon.vercel.app</loc></url>
   <url><loc>https://ratewatch-lemon.vercel.app/calculator</loc></url>
+  <url><loc>https://ratewatch-lemon.vercel.app/alerts</loc></url>
   <url><loc>https://ratewatch-lemon.vercel.app/learn</loc></url>
   <url><loc>https://ratewatch-lemon.vercel.app/about</loc></url>
 </urlset>

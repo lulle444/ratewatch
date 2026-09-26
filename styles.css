@@ -31,6 +31,8 @@ h3{font-size:21px;line-height:1.2}
 .btn{font:500 14px var(--body);border:1px solid var(--ink);background:transparent;color:var(--ink);border-radius:999px;padding:9px 18px;cursor:pointer;text-decoration:none;display:inline-block}
 .btn:hover{background:var(--ink);color:var(--panel)}
 .btn.primary{background:var(--ink);color:var(--panel)}
+.btn.small{font-size:13px;padding:7px 14px}
+code{font:500 .9em var(--mono);background:var(--bg2);border-radius:5px;padding:1px 5px}
 button{font:inherit;color:inherit}
 
 /* nav */

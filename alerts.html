@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>About · Ratewatch</title>
-<meta name="description" content="What Ratewatch is and where its numbers come from.">
-<link rel="canonical" href="https://ratewatch-lemon.vercel.app/about">
+<title>Rate alerts · Ratewatch</title>
+<meta name="description" content="Free Telegram alerts when a dollar yield on chain crosses your level or the T-bill rate moves, plus a weekly digest.">
+<link rel="canonical" href="https://ratewatch-lemon.vercel.app/alerts">
 <link rel="icon" type="image/svg+xml" href="/assets/logo-mark.svg">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 <meta property="og:type" content="website">
-<meta property="og:title" content="About · Ratewatch">
-<meta property="og:description" content="What Ratewatch is and where its numbers come from.">
-<meta property="og:url" content="https://ratewatch-lemon.vercel.app/about">
+<meta property="og:title" content="Rate alerts · Ratewatch">
+<meta property="og:description" content="Free Telegram alerts when a dollar yield on chain crosses your level or the T-bill rate moves, plus a weekly digest.">
+<meta property="og:url" content="https://ratewatch-lemon.vercel.app/alerts">
 <meta property="og:image" content="https://ratewatch-lemon.vercel.app/assets/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -24,36 +24,19 @@
 <link rel="stylesheet" href="/styles.css">
 <link rel="stylesheet" href="/brand.css">
 </head>
-<body data-page="about" data-bot="">
+<body data-page="alerts" data-bot="">
 <div class="wrap">
   <header class="nav">
     <a class="logo" href="/" aria-label="Ratewatch home"><img src="/assets/logo-mark.svg" alt="" width="34" height="34"><span class="word">Rate<i>watch</i></span></a>
-    <nav class="navlinks" aria-label="Main"><a href="/">Rates</a><a href="/calculator">Calculator</a><a href="/alerts">Alerts</a><a href="/learn">Learn</a><a href="/about" aria-current="page">About</a></nav>
+    <nav class="navlinks" aria-label="Main"><a href="/">Rates</a><a href="/calculator">Calculator</a><a href="/alerts" aria-current="page">Alerts</a><a href="/learn">Learn</a><a href="/about">About</a></nav>
     <div class="navright"><span class="bench-pill" id="benchPill" title="3-month US T-bill rate"><small>T-bill</small> <b class="num" id="benchPillRate">–</b></span></div>
   </header>
   <section class="pagehead">
-    <p class="eyebrow">About</p>
-    <h1>Ratewatch, in one line.</h1>
-    <p class="lede">What a dollar earns on chain, held against the T-bill rate.</p>
+    <p class="eyebrow">Alerts</p>
+    <h1>Know when a rate <em>moves.</em></h1>
+    <p class="lede">Soon: free Telegram messages when a dollar yield crosses your level, when the T-bill rate moves, and every Monday the week in dollar rates.</p>
   </section>
-  <section class="twocol">
-    <article class="panel note">
-      <h3>What it is</h3>
-      <p>Ratewatch lists every dollar yield on chain that is big enough to matter: tokenized T-bill funds, stablecoin savings rates, synthetic dollars and deep lending markets. Each one is held against the 3-month US T-bill rate, so you can see how much extra it pays and what kind of risk pays for it.</p>
-    </article>
-    <article class="panel note">
-      <h3>Where the numbers come from</h3>
-      <p>Yields, deposits and history come from DefiLlama’s public yields data, refreshed every 10 minutes. The T-bill rate is the 3-month Treasury yield from FRED, with the US Treasury’s own daily rates as backup.</p>
-    </article>
-    <article class="panel note">
-      <h3>No paid placements</h3>
-      <p>Nobody pays to be listed or ranked. Rows are sorted by the numbers only.</p>
-    </article>
-    <article class="panel note">
-      <h3>Not financial advice</h3>
-      <p>A token is not a bank deposit. It can lose its peg, its issuer can freeze it, and smart contracts can fail. Read each issuer’s terms before you deposit.</p>
-    </article>
-  </section>
+  <p class="block"><a class="btn primary" href="/">See every dollar yield</a></p>
 
   <footer class="foot">
     <div><a class="logo small" href="/"><img src="/assets/logo-mark.svg" alt="" width="24" height="24"><span class="word">Rate<i>watch</i></span></a>

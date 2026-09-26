@@ -24,3 +24,5 @@ jobs:
           open("top", "w").write(max(d["rows"], key=lambda r: r["tvl"])["id"])
           PY
           [ -f top ] && curl -sS -m 30 "$SITE/api/history?pool=$(cat top)" | python3 -c 'import json,sys; h=json.load(sys.stdin); p=h.get("points",[]); print("history:", len(p), "days", p[:1], p[-1:], h.get("error",""))'
+      - name: Check alerts
+        run: curl -sS -m 90 "${{ vars.SITE_URL || 'https://ratewatch-lemon.vercel.app' }}/api/check-alerts"; echo

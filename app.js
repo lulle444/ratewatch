@@ -7,6 +7,7 @@ const usd = v => v == null ? "–" : v >= 1e9 ? "$" + (v / 1e9).toFixed(v >= 1e1
 const money = v => "$" + v.toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2});
 const catColor = id => `var(--b-cat-${id})`;
 const PAGE = 25;
+const BOT = document.body.dataset.bot || "";
 
 const S = {data: null, cat: "all", chain: "all", q: "", sort: "tvl", dir: -1, limit: PAGE, open: null, hist: new Map()};
 const catOf = id => (S.data.cats.find(c => c.id === id) || {name: id, short: id});
@@ -141,6 +142,7 @@ function detailRow(r){
       <h4>Where it pays</h4>
       <ul class="pl">${r.pools.slice(0, 6).map(p => `<li><a href="https://defillama.com/yields/pool/${esc(p.pool)}" target="_blank" rel="noopener">${esc(p.chain)}</a><span class="num">${pct(p.apy30 ?? p.apy)}</span><span class="num muted">${usd(p.tvl)}</span></li>`).join("")}</ul>
       ${r.reward ? `<p>${pct(r.reward)} of today’s rate is paid in reward tokens, which can end or lose value.</p>` : ""}
+      ${BOT ? `<p><a class="btn primary small" href="https://t.me/${BOT}?start=a_${encodeURIComponent(r.key)}" target="_blank" rel="noopener">🔔 Alert me when ${esc(r.symbol)} moves</a></p>` : ""}
     </div></div></td></tr>`;
 }
 

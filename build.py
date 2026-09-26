@@ -36,7 +36,8 @@ LOGO = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64
 """
 open(os.path.join(ROOT, "assets", "logo-mark.svg"), "w").write(LOGO)
 
-NAV = [("/", "Rates"), ("/calculator", "Calculator"), ("/learn", "Learn"), ("/about", "About")]
+NAV = [("/", "Rates"), ("/calculator", "Calculator"), ("/alerts", "Alerts"), ("/learn", "Learn"), ("/about", "About")]
+BOT = str(B.get("telegram") or "").lstrip("@")
 XLINK = f'<a class="navx" href="https://x.com/{B["x"]}" target="_blank" rel="noopener me" aria-label="Follow {{{{name}}}} on X">X</a>' if B.get("x") else ""
 
 
@@ -69,7 +70,7 @@ def page(path, title, desc, body, og="/assets/og.png"):
 <link rel="stylesheet" href="/styles.css">
 <link rel="stylesheet" href="/brand.css">
 </head>
-<body data-page="{path.strip('/') or 'home'}">
+<body data-page="{path.strip('/') or 'home'}" data-bot="{BOT}">
 <div class="wrap">
   <header class="nav">
     <a class="logo" href="/" aria-label="{{{{name}}}} home"><img src="/assets/logo-mark.svg" alt="" width="34" height="34"><span class="word">{{{{w1}}}}<i>{{{{w2}}}}</i></span></a>
@@ -204,6 +205,35 @@ ABOUT = head("About", "{{name}}, in one line.",
   </section>
 """
 
+ALERTS_ON = head("Alerts", "Know when a rate <em>moves.</em>",
+                 "Free Telegram messages when a dollar yield crosses your level, when the T-bill rate moves, and every Monday the week in dollar rates.") + f"""
+  <section class="twocol">
+    <article class="panel note">
+      <h3>Rate alerts</h3>
+      <p>Send <code>/alert sUSDe 6</code> and get a message when sUSDe pays 6% or more. Add <code>below</code> for a drop, like <code>/alert USDY 3 below</code>. Or open any yield on the <a href="/">rates board</a> and tap 🔔.</p>
+      <p><a class="btn primary" href="https://t.me/{BOT}" target="_blank" rel="noopener">Open @{BOT}</a></p>
+    </article>
+    <article class="panel note">
+      <h3>The T-bill line</h3>
+      <p>Every rate here is held against the 3-month US T-bill rate. Send <code>/tbill 0.1</code> to hear when it moves a tenth of a point.</p>
+      <p><a class="btn" href="https://t.me/{BOT}?start=tb" target="_blank" rel="noopener">Alert me when it moves</a></p>
+    </article>
+    <article class="panel note">
+      <h3>Monday digest</h3>
+      <p>Every Monday morning: the T-bill rate, the typical rate of each kind of dollar yield, the highest-paying big ones and the week’s biggest moves.</p>
+      <p><a class="btn" href="https://t.me/{BOT}?start=wk" target="_blank" rel="noopener">Get the Monday digest</a></p>
+    </article>
+    <article class="panel note">
+      <h3>How it works</h3>
+      <p>We check every 15 minutes. An alert fires once when the rate crosses your level, then waits until the rate has moved back 0.2 points before it can fire again, so a rate hovering at your level doesn’t flood you. Send <code>/list</code> to see or remove alerts, and <code>/stop</code> to remove everything.</p>
+    </article>
+  </section>
+"""
+ALERTS_SOON = head("Alerts", "Know when a rate <em>moves.</em>",
+                   "Soon: free Telegram messages when a dollar yield crosses your level, when the T-bill rate moves, and every Monday the week in dollar rates.") + """
+  <p class="block"><a class="btn primary" href="/">See every dollar yield</a></p>
+"""
+
 NOTFOUND = head("404", "That page <em>isn’t here.</em>", "The link may be old or mistyped.") + """
   <p class="block"><a class="btn primary" href="/">See every dollar yield</a></p>
 """
@@ -211,6 +241,7 @@ NOTFOUND = head("404", "That page <em>isn’t here.</em>", "The link may be old 
 PAGES = [
     ("index.html", "/", "{{name}}: what a dollar earns on chain", B["description"], HOME),
     ("calculator.html", "/calculator", "Dollar yield calculator · {{name}}", "What your dollars would earn in tokenized T-bills, savings rates, synthetic dollars and lending, next to the T-bill rate.", CALC),
+    ("alerts.html", "/alerts", "Rate alerts · {{name}}", "Free Telegram alerts when a dollar yield on chain crosses your level or the T-bill rate moves, plus a weekly digest.", ALERTS_ON if BOT else ALERTS_SOON),
     ("learn.html", "/learn", "Where dollar yield comes from · {{name}}", "T-bill funds, savings rates, synthetic dollars and lending: who pays the yield, and what you take on to earn it.", LEARN),
     ("about.html", "/about", "About · {{name}}", "What {{name}} is and where its numbers come from.", ABOUT),
     ("404.html", "/404", "Not found · {{name}}", "That page isn’t here.", NOTFOUND),
