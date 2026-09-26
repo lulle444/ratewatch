@@ -86,7 +86,7 @@ def page(path, title, desc, body, og="/api/og?p=home", kind=None):
       <p>{{{{tagline}}}}</p></div>
     <nav aria-label="Footer">{"".join(f'<a href="{h}">{t}</a>' for h, t in NAV[:4] + [("/premium", "Risk premium")] + NAV[4:])}</nav>
     <nav class="coinnav" aria-label="Yields by coin"><span>By coin</span>{"".join(f'<a href="/{c}">{n}</a>' for c, n in COINS)}</nav>
-    <p class="fine">Yields from <a href="https://defillama.com/yields" target="_blank" rel="noopener">DefiLlama</a>. The T-bill rate from <a href="https://fred.stlouisfed.org/series/DGS3MO" target="_blank" rel="noopener">FRED</a> and the <a href="https://home.treasury.gov/resource-center/data-chart-center/interest-rates" target="_blank" rel="noopener">US Treasury</a>. No paid placements. Not financial advice. Sister sites: <a href="https://tidewatch-olive.vercel.app" target="_blank" rel="noopener">Tidewatch</a> and <a href="https://usepegwatch.vercel.app" target="_blank" rel="noopener">Pegwatch</a>.</p>
+    <p class="fine">Yields from <a href="https://defillama.com/yields" target="_blank" rel="noopener">DefiLlama</a>. The T-bill rate from <a href="https://fred.stlouisfed.org/series/DGS3MO" target="_blank" rel="noopener">FRED</a> and the <a href="https://home.treasury.gov/resource-center/data-chart-center/interest-rates" target="_blank" rel="noopener">US Treasury</a>. No paid placements. Not financial advice. Sister sites: <a href="https://www.usetidewatch.org" target="_blank" rel="noopener">Tidewatch</a> and <a href="https://usepegwatch.vercel.app" target="_blank" rel="noopener">Pegwatch</a>.</p>
   </footer>
 </div>
 <script src="/bg.js" defer></script>

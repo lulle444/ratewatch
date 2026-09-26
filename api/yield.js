@@ -315,7 +315,7 @@ function chainMain(c, board, all){
     ` The biggest is ${big.r.name} ${big.r.symbol} with ${usd(big.tvl)}.`;
   const share = `What a dollar earns on ${c.name}: ${pct(c.avg)} on average, up to ${pct(best.apy30)} in ${best.r.name} ${best.r.symbol}` + (tb ? `. T-bills pay ${pct(tb.rate)}.` : ".");
   const parts = CAT_ORDER.filter(k => c.mix[k] > 0);
-  const tide = c.name === "Robinhood Chain" ? `<p class="fine">Want every Robinhood Chain pool, not only dollar yields? Our sister site <a href="https://tidewatch-olive.vercel.app/yields" target="_blank" rel="noopener">Tidewatch</a> tracks them all.</p>` : "";
+  const tide = c.name === "Robinhood Chain" ? `<p class="fine">Want every Robinhood Chain pool, not only dollar yields? Our sister site <a href="https://www.usetidewatch.org/yields" target="_blank" rel="noopener">Tidewatch</a> tracks them all.</p>` : "";
   const where = e => e.r.chains.length > 1 ? `also on ${e.r.chains.length - 1} other chain${e.r.chains.length > 2 ? "s" : ""}` : e.r.cat === "lending" ? (e.r.meta || "") : `only on ${c.name}`;
   return `  <section class="pagehead">
     <p class="crumbs"><a href="/chains">Chains</a> <span>/</span> <span>${esc(c.name)}</span></p>
