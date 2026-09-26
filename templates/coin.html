@@ -18,11 +18,33 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://ratewatch-lemon.vercel.app/api/og?p=coin&amp;c=__COIN__">
 <meta name="theme-color" content="#F4F1E8">
+<link rel="preload" href="/api/rates" as="fetch" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="/styles.css">
-<link rel="stylesheet" href="/brand.css">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"></noscript>
+<link rel="stylesheet" href="/styles.css?v=a10bed6217">
+<style>:root{
+  --b-bg:#F4F1E8;
+  --b-bg2:#EBE6D8;
+  --b-panel:#FFFDF8;
+  --b-line:#DDD6C4;
+  --b-ink:#16211B;
+  --b-muted:#5F6B63;
+  --b-accent:#0E6B47;
+  --b-accentInk:#FFFFFF;
+  --b-bench:#3A4540;
+  --b-up:#0E6B47;
+  --b-down:#B42318;
+  --b-warn:#9A6200;
+  --b-cat-tbill:#0E6B47;
+  --b-cat-savings:#2F5DA8;
+  --b-cat-synthetic:#B7791F;
+  --b-cat-lending:#8E3B82;
+  --f-display:"Fraunces";
+  --f-body:"IBM Plex Sans";
+  --f-mono:"IBM Plex Mono";
+}</style>
 </head>
 <body data-page="coin" data-bot="useRatewatchBot">
 <canvas id="tape" aria-hidden="true"></canvas>
@@ -41,7 +63,7 @@ __MAIN__
     <p class="fine">Yields from <a href="https://defillama.com/yields" target="_blank" rel="noopener">DefiLlama</a>. The T-bill rate from <a href="https://fred.stlouisfed.org/series/DGS3MO" target="_blank" rel="noopener">FRED</a> and the <a href="https://home.treasury.gov/resource-center/data-chart-center/interest-rates" target="_blank" rel="noopener">US Treasury</a>. No paid placements. Not financial advice. Sister sites: <a href="https://www.usetidewatch.org" target="_blank" rel="noopener">Tidewatch</a> and <a href="https://usepegwatch.vercel.app" target="_blank" rel="noopener">Pegwatch</a>.</p>
   </footer>
 </div>
-<script src="/bg.js" defer></script>
-<script src="/app.js" defer></script>
+<script src="/bg.js?v=1defd4c77b" defer></script>
+<script src="/app.js?v=fe6b0e9af9" defer></script>
 </body>
 </html>

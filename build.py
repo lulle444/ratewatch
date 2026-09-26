@@ -2,8 +2,10 @@
 
 To rename or recolor the site: edit brand.json, run  python3 build.py  and commit the result.
 Page text says the brand name through {{name}}, so nothing else needs to change.
+Run it after every change to styles.css, app.js or bg.js too: pages link them as file?v=<hash of the file>,
+and browsers keep a versioned file for a year (vercel.json), so a new hash is how they learn it changed.
 """
-import json, os
+import hashlib, json, os, re
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 B = json.load(open(os.path.join(ROOT, "brand.json"), encoding="utf-8"))
@@ -24,6 +26,13 @@ open(os.path.join(ROOT, "brand.css"), "w").write("/* Written by build.py from br
 FONTS = ("https://fonts.googleapis.com/css2?family=" + F["display"].replace(" ", "+") + ":ital,opsz,wght@0,9..144,400..700;1,9..144,400..600"
          + "&family=" + F["body"].replace(" ", "+") + ":wght@400;500;600&family=" + F["mono"].replace(" ", "+") + ":wght@400;500&display=swap")
 
+BRAND_CSS = "\n".join(css)
+
+
+def v(f):
+    return f"/{f}?v=" + hashlib.sha1(open(os.path.join(ROOT, f), "rb").read()).hexdigest()[:10]
+
+
 # ---------- logo mark: a rate dial, its needle just past the benchmark tick ----------
 LOGO = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <rect width="64" height="64" rx="15" fill="{C['ink']}"/>
@@ -43,7 +52,11 @@ BOT = str(B.get("telegram") or "").lstrip("@")
 XLINK = f'<a class="navx" href="https://x.com/{B["x"]}" target="_blank" rel="noopener me" aria-label="Follow {{{{name}}}} on X">X</a>' if B.get("x") else ""
 
 
-def page(path, title, desc, body, og="/api/og?p=home", kind=None):
+def ld(obj):
+    return '<script type="application/ld+json">' + json.dumps(obj, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/") + "</script>\n"
+
+
+def page(path, title, desc, body, og="/api/og?p=home", kind=None, extra=""):
     cur = ' aria-current="page"'
     nav = "".join(f'<a href="{h}"{cur if h == path or h != "/" and path.startswith(h + "/") else ""}>{t}</a>' for h, t in NAV)
     return fill(f"""<!doctype html>
@@ -66,12 +79,14 @@ def page(path, title, desc, body, og="/api/og?p=home", kind=None):
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="{{{{site}}}}{og}">{f'<meta name="twitter:site" content="@{B["x"]}">' if B.get("x") else ""}
 <meta name="theme-color" content="{C['bg']}">
+<link rel="preload" href="/api/rates" as="fetch" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="{FONTS}">
-<link rel="stylesheet" href="/styles.css">
-<link rel="stylesheet" href="/brand.css">
-</head>
+<link rel="preload" as="style" href="{FONTS}" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="{FONTS}"></noscript>
+<link rel="stylesheet" href="{v('styles.css')}">
+<style>{BRAND_CSS}</style>
+{extra}</head>
 <body data-page="{kind or path.strip('/') or 'home'}" data-bot="{BOT}">
 <canvas id="tape" aria-hidden="true"></canvas>
 <div class="wrap">
@@ -89,8 +104,8 @@ def page(path, title, desc, body, og="/api/og?p=home", kind=None):
     <p class="fine">Yields from <a href="https://defillama.com/yields" target="_blank" rel="noopener">DefiLlama</a>. The T-bill rate from <a href="https://fred.stlouisfed.org/series/DGS3MO" target="_blank" rel="noopener">FRED</a> and the <a href="https://home.treasury.gov/resource-center/data-chart-center/interest-rates" target="_blank" rel="noopener">US Treasury</a>. No paid placements. Not financial advice. Sister sites: <a href="https://www.usetidewatch.org" target="_blank" rel="noopener">Tidewatch</a> and <a href="https://usepegwatch.vercel.app" target="_blank" rel="noopener">Pegwatch</a>.</p>
   </footer>
 </div>
-<script src="/bg.js" defer></script>
-<script src="/app.js" defer></script>
+<script src="{v('bg.js')}" defer></script>
+<script src="{v('app.js')}" defer></script>
 </body>
 </html>
 """)
@@ -291,8 +306,19 @@ PAGES = [
     ("about.html", "/about", "About · {{name}}", "What {{name}} is and where its numbers come from.", ABOUT),
     ("404.html", "/404", "Not found · {{name}}", "That page isn’t here.", NOTFOUND),
 ]
+# Structured data: who runs the site on the home page, the questions on /learn as an FAQ.
+ORG = {"@type": "Organization", "@id": SITE + "/#org", "name": B["name"], "url": SITE + "/", "logo": SITE + "/assets/apple-touch-icon.png"}
+if B.get("x"):
+    ORG["sameAs"] = ["https://x.com/" + B["x"]]
+LD = {
+    "/": ld({"@context": "https://schema.org", "@graph": [ORG, {"@type": "WebSite", "@id": SITE + "/#site", "name": B["name"], "url": SITE + "/",
+         "description": B["description"], "publisher": {"@id": SITE + "/#org"}, "inLanguage": "en"}]}),
+    "/learn": ld({"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [
+        {"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": fill(a)}}
+        for q, a in re.findall(r"<h3>(.*?)</h3>\s*<p>(.*?)</p>", LEARN)]}),
+}
 for f, path, title, desc, body, *og in PAGES:
-    open(os.path.join(ROOT, f), "w").write(page(path, fill(title), fill(desc), fill(body), og=og[0] if og else "/api/og?p=home" if path == "/" else "/assets/og.png"))
+    open(os.path.join(ROOT, f), "w").write(page(path, fill(title), fill(desc), fill(body), og=og[0] if og else "/api/og?p=home" if path == "/" else "/assets/og.png", extra=LD.get(path, "")))
 
 # One page per dollar yield, /y/ethena-susde: api/yield.js fills the __KEYS__ in this template with the yield's numbers.
 os.makedirs(os.path.join(ROOT, "templates"), exist_ok=True)

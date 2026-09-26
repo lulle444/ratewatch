@@ -51,6 +51,61 @@
       "source": "/templates/:path*",
       "destination": "/",
       "permanent": false
+    },
+    {
+      "source": "/chains/hyperliquid-l1",
+      "destination": "/chains/hyperevm",
+      "permanent": true
+    },
+    {
+      "source": "/chains/plume-mainnet",
+      "destination": "/chains/plume",
+      "permanent": true
+    },
+    {
+      "source": "/chains/optimism",
+      "destination": "/chains/op-mainnet",
+      "permanent": true
+    },
+    {
+      "source": "/chains/xdai",
+      "destination": "/chains/gnosis",
+      "permanent": true
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(styles\\.css|app\\.js|bg\\.js)",
+      "has": [
+        {
+          "type": "query",
+          "key": "v"
+        }
+      ],
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/assets/brand/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=2592000, stale-while-revalidate=86400"
+        }
+      ]
+    },
+    {
+      "source": "/assets/(logo-mark\\.svg|apple-touch-icon\\.png|og\\.png)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400, stale-while-revalidate=604800"
+        }
+      ]
     }
   ]
 }
