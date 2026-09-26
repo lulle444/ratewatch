@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ratewatch: what a dollar earns on chain</title>
+<meta name="description" content="Every tokenized T-bill fund, savings rate, synthetic dollar and deep stablecoin lending market on every chain, compared live against the 3-month US T-bill rate.">
+<link rel="canonical" href="https://ratewatch.vercel.app/">
+<link rel="icon" type="image/svg+xml" href="/assets/logo-mark.svg">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Ratewatch: what a dollar earns on chain">
+<meta property="og:description" content="Every tokenized T-bill fund, savings rate, synthetic dollar and deep stablecoin lending market on every chain, compared live against the 3-month US T-bill rate.">
+<meta property="og:url" content="https://ratewatch.vercel.app/">
+<meta property="og:image" content="https://ratewatch.vercel.app/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://ratewatch.vercel.app/assets/og.png">
+<meta name="theme-color" content="#F4F1E8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/brand.css">
+</head>
+<body data-page="home">
+<div class="wrap">
+  <header class="nav">
+    <a class="logo" href="/" aria-label="Ratewatch home"><img src="/assets/logo-mark.svg" alt="" width="34" height="34"><span class="word">Rate<i>watch</i></span></a>
+    <nav class="navlinks" aria-label="Main"><a href="/" aria-current="page">Rates</a><a href="/calculator">Calculator</a><a href="/learn">Learn</a><a href="/about">About</a></nav>
+    <div class="navright"><span class="bench-pill" id="benchPill" title="3-month US T-bill rate"><small>T-bill</small> <b class="num" id="benchPillRate">–</b></span></div>
+  </header>
+  <section class="hero">
+    <div>
+      <p class="eyebrow">Dollar yields on every chain</p>
+      <h1>What does a dollar <em>earn on chain?</em></h1>
+      <p class="lede">Every tokenized T-bill fund, savings rate, synthetic dollar and deep lending market, held against the rate the US government pays. Anything above that line is paid for with risk.</p>
+    </div>
+    <aside class="bench panel" aria-live="polite">
+      <p class="eyebrow">The line to beat</p>
+      <p class="bench-rate"><span class="num" id="benchRate">–</span><small>%</small></p>
+      <p class="bench-name">3-month US T-bill</p>
+      <p class="bench-sub" id="benchSub">Loading…</p>
+    </aside>
+  </section>
+
+  <section class="cats" id="cats" aria-label="What pays the yield"></section>
+
+  <section class="panel ladder" aria-labelledby="ladderH">
+    <div class="sectionhead"><div><h2 id="ladderH">The yield ladder</h2><p class="sub" id="ladderSub">Each dot is one dollar yield, placed at its 30-day average APY. The dashed line is the T-bill rate.</p></div></div>
+    <div class="ladderbox" id="ladder" role="img" aria-label="Dot plot of 30-day APY by type, against the T-bill rate"></div>
+  </section>
+
+  <section class="panel board" aria-labelledby="boardH">
+    <div class="sectionhead">
+      <div><h2 id="boardH">Every dollar yield</h2><p class="sub" id="boardSub">Loading rates…</p></div>
+      <div class="filters">
+        <label class="search"><span class="visually-hidden">Search</span><input id="q" type="search" placeholder="Search USDC, BUIDL, Aave…" autocomplete="off"></label>
+        <label class="select"><span class="visually-hidden">Chain</span><select id="chain"><option value="all">All chains</option></select></label>
+      </div>
+    </div>
+    <div class="chips" id="chips" role="group" aria-label="Type"></div>
+    <div class="tablebox">
+      <table class="rt">
+        <thead><tr>
+          <th scope="col">Dollar yield</th>
+          <th scope="col" class="hm">Type</th>
+          <th scope="col" class="r"><button data-sort="apy30">30-day APY</button></th>
+          <th scope="col" class="r hs"><button data-sort="apy">Today</button></th>
+          <th scope="col" class="r"><button data-sort="over">vs T-bill</button></th>
+          <th scope="col" class="r hs"><button data-sort="tvl">Deposits</button></th>
+        </tr></thead>
+        <tbody id="rows"><tr><td colspan="6" class="empty">Loading rates…</td></tr></tbody>
+      </table>
+    </div>
+    <p class="more"><button class="btn" id="showMore" hidden>Show more</button></p>
+    <p class="fine">30-day APY is DefiLlama’s 30-day average, the fairer number when rates jump around. “vs T-bill” is that average minus the 3-month T-bill rate. We leave out pools under $5M, lending markets under $50M, liquidity-pool tokens and rates above 40%.</p>
+  </section>
+
+  <footer class="foot">
+    <div><a class="logo small" href="/"><img src="/assets/logo-mark.svg" alt="" width="24" height="24"><span class="word">Rate<i>watch</i></span></a>
+      <p>What a dollar earns on chain, held against the T-bill rate.</p></div>
+    <nav aria-label="Footer"><a href="/">Rates</a><a href="/calculator">Calculator</a><a href="/learn">Learn</a><a href="/about">About</a></nav>
+    <p class="fine">Yields from <a href="https://defillama.com/yields" target="_blank" rel="noopener">DefiLlama</a>. The T-bill rate from <a href="https://fred.stlouisfed.org/series/DGS3MO" target="_blank" rel="noopener">FRED</a> and the <a href="https://home.treasury.gov/resource-center/data-chart-center/interest-rates" target="_blank" rel="noopener">US Treasury</a>. No paid placements. Not financial advice. Sister sites: <a href="https://tidewatch-olive.vercel.app" target="_blank" rel="noopener">Tidewatch</a> and <a href="https://usepegwatch.vercel.app" target="_blank" rel="noopener">Pegwatch</a>.</p>
+  </footer>
+</div>
+<script src="/app.js" defer></script>
+</body>
+</html>

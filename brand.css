@@ -1,0 +1,22 @@
+/* Written by build.py from brand.json. Edit brand.json instead. */
+:root{
+  --b-bg:#F4F1E8;
+  --b-bg2:#EBE6D8;
+  --b-panel:#FFFDF8;
+  --b-line:#DDD6C4;
+  --b-ink:#16211B;
+  --b-muted:#5F6B63;
+  --b-accent:#0E6B47;
+  --b-accentInk:#FFFFFF;
+  --b-bench:#3A4540;
+  --b-up:#0E6B47;
+  --b-down:#B42318;
+  --b-warn:#9A6200;
+  --b-cat-tbill:#0E6B47;
+  --b-cat-savings:#2F5DA8;
+  --b-cat-synthetic:#B7791F;
+  --b-cat-lending:#8E3B82;
+  --f-display:"Fraunces";
+  --f-body:"IBM Plex Sans";
+  --f-mono:"IBM Plex Mono";
+}

@@ -1,0 +1,32 @@
+{
+  "_note": "Everything that names or colors the site lives here. Change it, then run: python3 build.py",
+  "name": "Ratewatch",
+  "wordmark": ["Rate", "watch"],
+  "tagline": "What a dollar earns on chain, held against the T-bill rate.",
+  "description": "Every tokenized T-bill fund, savings rate, synthetic dollar and deep stablecoin lending market on every chain, compared live against the 3-month US T-bill rate.",
+  "domain": "ratewatch.vercel.app",
+  "x": "",
+  "colors": {
+    "bg": "#F4F1E8",
+    "bg2": "#EBE6D8",
+    "panel": "#FFFDF8",
+    "line": "#DDD6C4",
+    "ink": "#16211B",
+    "muted": "#5F6B63",
+    "accent": "#0E6B47",
+    "accentInk": "#FFFFFF",
+    "bench": "#3A4540",
+    "up": "#0E6B47",
+    "down": "#B42318",
+    "warn": "#9A6200",
+    "cat_tbill": "#0E6B47",
+    "cat_savings": "#2F5DA8",
+    "cat_synthetic": "#B7791F",
+    "cat_lending": "#8E3B82"
+  },
+  "fonts": {
+    "display": "Fraunces",
+    "body": "IBM Plex Sans",
+    "mono": "IBM Plex Mono"
+  }
+}

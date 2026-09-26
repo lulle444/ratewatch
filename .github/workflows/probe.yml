@@ -1,0 +1,24 @@
+name: Probe sources
+# Manual check of the raw sources: which DefiLlama projects look like dollar yields, and whether the T-bill feeds answer.
+on: workflow_dispatch
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - run: |
+          set +e
+          curl -sS -m 60 https://yields.llama.fi/pools -o pools.json -w 'pools HTTP %{http_code} %{size_download}B\n'
+          curl -sS -m 30 "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS3MO&cosd=2026-09-01" | tail -3
+          curl -sS -m 30 "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/2026/all?type=daily_treasury_bill_rates&field_tdr_date_value=2026&page&_format=csv" | head -2
+          python3 - <<'PY'
+          import json, collections
+          d = json.load(open("pools.json"))["data"]
+          st = [p for p in d if p.get("stablecoin") and p.get("exposure") == "single" and (p.get("tvlUsd") or 0) >= 5e6]
+          print(len(d), "pools,", len(st), "single stablecoin pools over $5M")
+          by = collections.defaultdict(float)
+          for p in st: by[p["project"]] += p["tvlUsd"]
+          for k, v in sorted(by.items(), key=lambda x: -x[1])[:120]:
+              syms = sorted({p["symbol"] for p in st if p["project"] == k})[:6]
+              print(f"  {k:32} {v/1e6:9.0f}M  {' '.join(syms)}")
+          PY

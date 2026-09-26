@@ -1,0 +1,24 @@
+name: Warm rates
+# Keeps the CDN copy of /api/rates fresh and prints a short health summary in the run log.
+on:
+  schedule: [{cron: "*/15 * * * *"}]
+  workflow_dispatch:
+jobs:
+  warm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Rates
+        run: |
+          set +e
+          SITE="${{ vars.SITE_URL || 'https://ratewatch.vercel.app' }}"
+          curl -sS -m 60 "$SITE/api/rates" -o rates.json -w 'HTTP %{http_code} in %{time_total}s\n'
+          python3 - <<'PY'
+          import json
+          try: d = json.load(open("rates.json"))
+          except Exception as e: print("not JSON:", e, open("rates.json").read()[:300]); raise SystemExit
+          if "error" in d: print("ERROR:", d["error"]); raise SystemExit
+          print("T-bill:", d.get("tbill"), "| rows:", len(d["rows"]), "| built in", d.get("ms"), "ms")
+          for c in d["cats"]: print(f'  {c["id"]:10} {c["count"]:3} yields  median {c["median"]}  tvl {c["tvl"]/1e9:.1f}B')
+          for r in sorted(d["rows"], key=lambda r: -r["tvl"])[:40]: print(f'  {r["cat"]:9} {r["project"]:28} {r["symbol"]:12} {r["apy30"] or 0:6.2f}%  {r["tvl"]/1e6:8.0f}M  {",".join(r["chains"][:4])}')
+          PY

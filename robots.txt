@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://ratewatch.vercel.app/sitemap.xml

@@ -1,0 +1,5 @@
+{
+  "name": "ratewatch",
+  "private": true,
+  "description": "What a dollar earns on chain, held against the T-bill rate. Static pages built by build.py from brand.json, plus Vercel functions in /api."
+}
