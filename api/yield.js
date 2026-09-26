@@ -138,7 +138,8 @@ module.exports = async function handler(req, res){
 
   const want = String(q.s || "").slice(0, 100), low = want.toLowerCase();
   // the slug, or a row key or DefiLlama pool id (what alert links carry), which redirect to the slug
-  const r = rows.find(x => x.slug === low) || rows.find(x => x.key.toLowerCase() === low || x.id === low || x.pools.some(p => p.pool === low));
+  const r = rows.find(x => x.slug === low) || rows.find(x => x.key.toLowerCase() === low || x.id === low || x.pools.some(p => p.pool === low)) ||
+    rows.find(x => low.endsWith("-" + x.id.slice(0, 4)) && low.startsWith(x.slug.split("-")[0] + "-"));
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   if (!r){
     if (!rows.length){   // the data is down, not the page: try again soon rather than tell search engines it's gone
