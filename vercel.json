@@ -6,13 +6,21 @@
       "includeFiles": "assets/logo-mark.svg"
     },
     "api/yield.js": {
-      "includeFiles": "{templates/yield.html,templates/funds.html,templates/coin.html,404.html}"
+      "includeFiles": "{templates/yield.html,templates/funds.html,templates/coin.html,templates/chains.html,templates/chain.html,404.html}"
     }
   },
   "rewrites": [
     {
       "source": "/funds",
       "destination": "/api/yield?p=funds"
+    },
+    {
+      "source": "/chains",
+      "destination": "/api/yield?p=chains"
+    },
+    {
+      "source": "/chains/:c",
+      "destination": "/api/yield?p=chain&c=:c"
     },
     {
       "source": "/:c(usdc|usdt|usds|dai|usde|pyusd|usdg|gho|rlusd|usd1)",

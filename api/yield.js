@@ -6,11 +6,12 @@ const B = require("../brand.json");
 const {board: getBoard} = require("../lib/rates");
 const FUNDS = require("../lib/funds");
 const COINS = require("../lib/coins");
+const CHAINS = require("../lib/chains");
 
 const SITE = "https://" + B.domain;
 const BOT = String(B.telegram || "").replace(/^@/, "");
 const read = f => fs.readFileSync(path.join(__dirname, "..", f), "utf8");
-let TPL, FTPL, CTPL, NOTFOUND;
+let TPL, FTPL, CTPL, HTPL, KTPL, NOTFOUND;
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
 const pct = v => v == null || !isFinite(v) ? "–" : v.toFixed(2) + "%";
@@ -237,6 +238,128 @@ ${others.length ? `
 `;
 }
 
+// The share of each type in a chain's deposits, as one thin stacked bar (a 2px gap between types), safest type first.
+const CAT_ORDER = ["tbill", "savings", "synthetic", "lending"];
+function mixBar(c, board, cls = ""){
+  const name = id => (board.cats.find(x => x.id === id) || {name: id}).name;
+  const parts = CAT_ORDER.filter(k => c.mix[k] > 0).map(k => ({k, share: c.mix[k] / c.tvl}));
+  return `<span class="mix ${cls}" role="img" aria-label="${esc(parts.map(p => `${name(p.k)} ${Math.round(p.share * 100)}%`).join(", "))}">${parts.map(p =>
+    `<i style="--c:var(--b-cat-${p.k});flex-grow:${p.share.toFixed(4)}" title="${esc(name(p.k))}: ${Math.round(p.share * 100)}% (${usd(c.mix[p.k])})"></i>`).join("")}</span>`;
+}
+const catLegend = board => `<div class="legend catlegend">${CAT_ORDER.map(k => `<span><span class="sw" style="--c:var(--b-cat-${k})"></span>${esc((board.cats.find(x => x.id === k) || {name: k}).name)}</span>`).join("")}</div>`;
+const xLink = (text, url) => `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}` + (B.x ? `&via=${encodeURIComponent(B.x)}` : "");
+
+// /chains: what the average deposited dollar earns on each chain, with the mix of yield types behind it.
+function chainsMain(board){
+  const tb = board.tbill, all = CHAINS.byChain(board), shown = all.filter(c => c.page), small = all.filter(c => !c.page);
+  const total = all.reduce((s, c) => s + c.tvl, 0), first = all[0];
+  const byAvg = shown.slice().sort((a, b) => b.avg - a.avg), topAvg = byAvg[0];
+  const max = Math.max(...byAvg.map(c => c.avg), tb ? tb.rate : 0) * 1.1;
+  const bar = (c, i) => `<a class="cb-name" style="grid-row:${i + 1}" href="/chains/${c.slug}">${esc(c.name)}</a>
+      <span class="cb-track" style="grid-row:${i + 1}" title="${esc(c.name)}: the average deposited dollar earns ${pct(c.avg)} across ${c.count} yields, ${usd(c.tvl)} deposited"><i style="width:${(c.avg / max * 100).toFixed(2)}%"></i></span>
+      <span class="cb-val num" style="grid-row:${i + 1}">${pct(c.avg)}</span>`;
+  const row = c => `<tr>
+        <td><a class="tok rowlink" href="/chains/${c.slug}"><b>${esc(c.name)}</b><small>${c.count} yields · best ${esc(c.best.r.symbol)} ${pct(c.best.apy30)}</small></a>${mixBar(c, board)}</td>
+        <td class="r"><span class="apy">${pct(c.avg)}</span></td>
+        <td class="r"><span class="over ${overCls(c.over)}">${pts(c.over)}</span></td>
+        <td class="r hs num">${usd(c.tvl)}</td></tr>`;
+  const share = topAvg ? `Where a dollar earns most on chain: ${topAvg.name}, where the average deposited dollar gets ${pct(topAvg.avg)}` + (tb ? ` vs ${pct(tb.rate)} for T-bills.` : ".") : "";
+  return `  <section class="pagehead">
+    <p class="eyebrow">Dollar yields by chain</p>
+    <h1>What does a dollar earn on <em>each chain?</em></h1>
+    <p class="lede">Every dollar yield we track, added up chain by chain: how much is deposited, what the average deposited dollar earns there against the 3-month T-bill rate${tb ? ` of ${pct(tb.rate)}` : ""}, and what kind of yield pays it.</p>
+    <p class="yact"><a class="btn" href="${esc(xLink(share, SITE + "/chains"))}" target="_blank" rel="noopener">Share on X</a></p>
+  </section>
+
+  <section class="ystats" aria-label="Chains in numbers">
+    ${stat(String(all.length), "chains with dollar yield")}
+    ${stat(usd(total), "deposited in the yields we track")}
+    ${stat(Math.round(first.tvl / total * 100) + "%", `of it on ${esc(first.name)}`)}
+    ${stat(pct(topAvg.avg), `highest average, on ${esc(topAvg.name)}`)}
+  </section>
+
+  <section class="panel cbox" aria-labelledby="cbH">
+    <div class="sectionhead"><div><h2 id="cbH">What the average dollar earns</h2><p class="sub">The 30-day APY of every dollar yield on the chain, weighted by how much is deposited in each. The dashed line is the T-bill rate.</p></div></div>
+    <div class="cbars" style="--tb:${tb ? (tb.rate / max * 100).toFixed(2) : -10}%">
+      ${byAvg.map(bar).join("\n      ")}
+      ${tb ? `<span class="cb-line" style="grid-row:1 / ${byAvg.length + 1}" aria-hidden="true"><b>T-bill ${pct(tb.rate)}</b></span>` : ""}
+    </div>
+    <p class="fine">A chain full of T-bill funds sits near the line; one where most dollars are lent out sits above it, and so does its risk.</p>
+  </section>
+
+  <section class="panel board" aria-labelledby="chH">
+    <div class="sectionhead"><div><h2 id="chH">Every chain</h2><p class="sub">Most deposits first. The bar under each chain shows which types of yield its deposits sit in.</p></div></div>
+    ${catLegend(board)}
+    <div class="tablebox"><table class="rt ct cht">
+      <thead><tr><th scope="col">Chain</th><th scope="col" class="r">Average APY</th><th scope="col" class="r">vs T-bill</th><th scope="col" class="r hs">Deposits</th></tr></thead>
+      <tbody>${shown.map(row).join("")}</tbody>
+    </table></div>
+    ${small.length ? `<p class="fine">Also tracked, one yield each: ${small.map(c => `${esc(c.name)} (<a href="/y/${esc(c.best.r.slug)}">${esc(c.best.r.name + " " + c.best.r.symbol)}</a>, ${pct(c.best.apy30)})`).join(", ")}.</p>` : ""}
+  </section>
+
+  <section class="twocol">
+    <article class="panel note"><h3>Why the same dollar earns more on one chain</h3><p>Lending rates are set by each market’s own borrowers, so a chain where many people borrow dollars to trade pays more. A chain whose deposits sit mostly in T-bill funds or savings rates stays close to the T-bill line. More yield still means more risk, not a better chain.</p></article>
+    <article class="panel note"><h3>Same token, many chains</h3><p>T-bill funds, savings rates and synthetic dollars usually pay the same on every chain they live on. We count each chain’s own deposits, so a token on four chains adds to all four. Moving between chains through a bridge adds its own risk.</p></article>
+  </section>
+  <p class="block"><a class="btn" href="/">See every dollar yield</a> <a class="btn" href="/premium">What risk has paid</a></p>
+`;
+}
+
+// /chains/base …: every dollar yield on one chain, with that chain's own deposits and rates.
+function chainMain(c, board, all){
+  const tb = board.tbill, catName = id => (board.cats.find(x => x.id === id) || {short: id}).short || id;
+  const others = all.filter(x => x.page && x !== c);
+  const best = c.best, big = c.entries.slice().sort((a, b) => b.tvl - a.tvl)[0];
+  const lede = `${c.about ? c.about + " " : ""}We track ${c.count} dollar yields here with ${usd(c.tvl)} deposited. The average deposited dollar earns ${pct(c.avg)}` +
+    (tb ? `, ${Math.abs(c.over) < 0.005 ? "level with" : `${Math.abs(c.over).toFixed(2)} points ${c.over > 0 ? "above" : "below"}`} the 3-month T-bill rate of ${pct(tb.rate)}.` : ".") +
+    ` The biggest is ${big.r.name} ${big.r.symbol} with ${usd(big.tvl)}.`;
+  const share = `What a dollar earns on ${c.name}: ${pct(c.avg)} on average, up to ${pct(best.apy30)} in ${best.r.name} ${best.r.symbol}` + (tb ? `. T-bills pay ${pct(tb.rate)}.` : ".");
+  const parts = CAT_ORDER.filter(k => c.mix[k] > 0);
+  const tide = c.name === "Robinhood Chain" ? `<p class="fine">Want every Robinhood Chain pool, not only dollar yields? Our sister site <a href="https://tidewatch-olive.vercel.app/yields" target="_blank" rel="noopener">Tidewatch</a> tracks them all.</p>` : "";
+  const where = e => e.r.chains.length > 1 ? `also on ${e.r.chains.length - 1} other chain${e.r.chains.length > 2 ? "s" : ""}` : e.r.cat === "lending" ? (e.r.meta || "") : `only on ${c.name}`;
+  return `  <section class="pagehead">
+    <p class="crumbs"><a href="/chains">Chains</a> <span>/</span> <span>${esc(c.name)}</span></p>
+    <h1>What does a dollar earn on <em>${esc(c.name)}?</em></h1>
+    <p class="lede">${esc(lede)}</p>
+    <p class="yact"><a class="btn" href="${esc(xLink(share, SITE + "/chains/" + c.slug))}" target="_blank" rel="noopener">Share on X</a></p>
+    ${tide}
+  </section>
+
+  <section class="ystats" aria-label="${esc(c.name)} in numbers">
+    ${stat(pct(c.avg), tb ? `average deposited dollar (T-bill ${pct(tb.rate)})` : "average deposited dollar", "")}
+    ${stat(pct(best.apy30), `highest (${esc(best.r.name + " " + best.r.symbol)})`)}
+    ${stat(usd(c.tvl), "deposited")}
+    ${stat(tb ? `${c.above} of ${c.count}` : String(c.count), tb ? "pay more than T-bills" : "yields tracked")}
+  </section>
+
+  <section class="panel cbox" aria-labelledby="mixH">
+    <div class="sectionhead"><div><h2 id="mixH">What pays the yield on ${esc(c.name)}</h2><p class="sub">Where its deposits sit, by type of yield.</p></div></div>
+    ${mixBar(c, board, "big")}
+    <div class="legend catlegend mixlegend">${parts.map(k => `<span><span class="sw" style="--c:var(--b-cat-${k})"></span>${esc((board.cats.find(x => x.id === k) || {name: k}).name)} <b class="num">${Math.round(c.mix[k] / c.tvl * 100)}%</b> <span class="num">${usd(c.mix[k])}</span></span>`).join("")}</div>
+  </section>
+
+  <section class="panel board" aria-labelledby="chyH">
+    <div class="sectionhead"><div><h2 id="chyH">Every dollar yield on ${esc(c.name)}</h2><p class="sub">Highest 30-day average first, with the deposits on ${esc(c.name)} only. Tap one for its history, what pays it and where else it pays.</p></div></div>
+    <div class="tablebox"><table class="rt ct">
+      <thead><tr><th scope="col">Dollar yield</th><th scope="col" class="hm">Type</th><th scope="col" class="r">30-day APY</th><th scope="col" class="r">vs T-bill</th><th scope="col" class="r hs">Deposits here</th></tr></thead>
+      <tbody>${c.entries.map(e => `<tr>
+        <td><a class="tok rowlink" href="/y/${esc(e.r.slug)}"><b>${esc(e.r.name)} <span class="muted">${esc(e.r.symbol)}</span></b>${where(e) ? `<small>${esc(where(e))}</small>` : ""}</a></td>
+        <td class="hm"><span class="type"><span class="sw" style="--c:var(--b-cat-${e.r.cat})"></span>${esc(catName(e.r.cat))}</span></td>
+        <td class="r"><span class="apy">${pct(e.apy30)}</span></td>
+        <td class="r"><span class="over ${overCls(tb ? e.apy30 - tb.rate : null)}">${tb ? pts(e.apy30 - tb.rate) : "–"}</span></td>
+        <td class="r hs num">${usd(e.tvl)}</td></tr>`).join("")}</tbody>
+    </table></div>
+    <p class="fine">30-day APY is DefiLlama’s 30-day average for the pool on ${esc(c.name)}. Rates that pay part of their yield in reward tokens count those too.</p>
+  </section>
+${others.length ? `
+  <section class="yrel" aria-labelledby="otherH">
+    <h2 id="otherH">Other chains</h2>
+    <div class="chips coinchips">${others.map(x => `<a class="chip" href="/chains/${x.slug}">${esc(x.name)}</a>`).join("")}</div>
+  </section>` : ""}
+  <p class="block"><a class="btn" href="/chains">Compare every chain</a> <a class="btn" href="/">See every dollar yield</a></p>
+`;
+}
+
 function page(r, board){
   const sum = summary(r, board.tbill);
   const t = `${label(r)}: APY and history vs T-bills · ${B.name}`;
@@ -263,6 +386,7 @@ module.exports = async function handler(req, res){
     res.setHeader("Cache-Control", "public, s-maxage=21600, stale-while-revalidate=86400");
     return res.status(200).send('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
       COINS.COINS.filter(c => COINS.rowsOf(rows, c.id).length).map(c => `  <url><loc>${SITE}/${c.id}</loc></url>\n`).join("") +
+      CHAINS.byChain(board).filter(c => c.page).map(c => `  <url><loc>${SITE}/chains/${c.slug}</loc></url>\n`).join("") +
       rows.map(r => `  <url><loc>${SITE}/y/${esc(r.slug)}</loc></url>\n`).join("") + "</urlset>\n");
   }
 
@@ -278,6 +402,25 @@ module.exports = async function handler(req, res){
     return res.status(200).send(CTPL
       .replace(/__COIN__/g, () => coin.id).replace(/__NAME__/g, () => esc(coin.name)).replace(/__DESC__/g, () => esc(desc))
       .replace("__MAIN__", () => coinMain(coin, list, board)));
+  }
+
+  if (q.p === "chains" || q.p === "chain"){
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    if (!rows.length){ res.setHeader("Cache-Control", "no-store"); return res.status(503).send(read("404.html").replace("The link may be old or mistyped.", "Rates are unavailable right now. Please try again in a minute.")); }
+    const all = CHAINS.byChain(board);
+    if (q.p === "chains"){
+      HTPL = HTPL || read("templates/chains.html");
+      res.setHeader("Cache-Control", "public, s-maxage=900, stale-while-revalidate=86400");
+      return res.status(200).send(HTPL.replace("__MAIN__", () => chainsMain(board)));
+    }
+    const c = all.find(x => x.page && x.slug === String(q.c || "").toLowerCase());
+    if (!c){ res.setHeader("Cache-Control", "public, s-maxage=600"); return res.status(404).send(read("404.html").replace("The link may be old or mistyped.", "We don’t track enough dollar yields on that chain for a page of its own.")); }
+    KTPL = KTPL || read("templates/chain.html");
+    const tb = board.tbill, desc = `What a dollar earns on ${c.name}: ${c.count} dollar yields, ${usd(c.tvl)} deposited, ${pct(c.avg)} for the average deposited dollar${tb ? ` against the ${pct(tb.rate)} T-bill rate` : ""}. Highest: ${c.best.r.name} ${c.best.r.symbol} at ${pct(c.best.apy30)}.`;
+    res.setHeader("Cache-Control", "public, s-maxage=900, stale-while-revalidate=86400");
+    return res.status(200).send(KTPL
+      .replace(/__CHAIN__/g, () => c.slug).replace(/__NAME__/g, () => esc(c.name)).replace(/__DESC__/g, () => esc(desc))
+      .replace("__MAIN__", () => chainMain(c, board, all)));
   }
 
   if (q.p === "funds"){

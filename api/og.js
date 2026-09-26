@@ -6,6 +6,7 @@ const B = require("../brand.json");
 const {board: getBoard, premium: getPremium} = require("../lib/rates");
 const FUNDS = require("../lib/funds");
 const COINS = require("../lib/coins");
+const CHAINS = require("../lib/chains");
 
 const K = B.colors, F = B.fonts;
 const CAT = {tbill: K.cat_tbill, savings: K.cat_savings, synthetic: K.cat_synthetic, lending: K.cat_lending};
@@ -64,6 +65,20 @@ function bars(items){
         h({fontWeight: 500, color: K.ink}, i.name), h({fontFamily: F.mono, fontWeight: 500, color: K.ink}, pct(i.v))),
       h({height: 30, width: 470, backgroundColor: K.bg2, borderRadius: 6},
         h({height: 30, width: Math.max(8, Math.round(470 * (i.v || 0) / top)), backgroundColor: i.color, borderRadius: 6})))));
+}
+
+// Up to six ranked bars on one scale, with the T-bill rate marked across them.
+function rank(items, tb, W = 580){
+  const max = Math.max(...items.map(i => i.v), tb || 0) * 1.08;
+  return h({flexDirection: "column", width: W, gap: items.length > 5 ? 11 : 14},
+    ...items.map(i => h({flexDirection: "column"},
+      h({justifyContent: "space-between", fontSize: 21, marginBottom: 6},
+        h({fontWeight: 500}, i.name.slice(0, 34), i.sub ? h({color: K.muted, marginLeft: 8}, i.sub) : null),
+        h({fontFamily: F.mono, fontWeight: 500}, pct(i.v))),
+      h({height: 14, width: W, backgroundColor: K.bg2, borderRadius: 4, position: "relative"},
+        h({height: 14, width: Math.max(6, Math.round(W * i.v / max)), backgroundColor: i.color, borderRadius: 4}),
+        tb == null ? null : h({position: "absolute", left: Math.round(W * tb / max) - 2, top: -4, width: 6, height: 22, backgroundColor: K.bench, borderLeft: `2px solid ${K.bg}`, borderRight: `2px solid ${K.bg}`})))),
+    tb == null ? null : h({fontSize: 17, color: K.muted, marginTop: 2}, h({width: 14, height: 2, backgroundColor: K.bench, marginTop: 11, marginRight: 8}), `3-month T-bill ${tb.toFixed(2)}%`));
 }
 
 const tile = (v, cap, sub, color) => h({flexDirection: "column", flex: 1, padding: "16px 20px", backgroundColor: K.panel, border: `1px solid ${K.line}`, borderRadius: 12,
@@ -128,6 +143,29 @@ const CARDS = {
               h({height: 14, width: Math.max(6, Math.round(580 * r.apy30 / max)), backgroundColor: CAT[r.cat] || K.accent, borderRadius: 4}),
               tb == null ? null : h({position: "absolute", left: Math.round(580 * tb / max), top: -4, width: 2, height: 22, backgroundColor: K.bench})))),
           tb == null ? null : h({fontSize: 17, color: K.muted, marginTop: 2}, h({width: 14, height: 2, backgroundColor: K.bench, marginTop: 11, marginRight: 8}), `3-month T-bill ${tb.toFixed(2)}%`))),
+      h({height: 16}));
+  },
+  async chains(){
+    const b = await getBoard(), tb = b.tbill && b.tbill.rate;
+    const top = CHAINS.byChain(b).filter(c => c.page).slice(0, 6).sort((x, y) => y.avg - x.avg);
+    if (!top.length) return null;
+    return frame("Dollar yields by chain", "/chains",
+      h({justifyContent: "space-between", alignItems: "center", marginTop: 26, flex: 1},
+        h({flexDirection: "column", maxWidth: 440},
+          h({fontFamily: F.display, fontWeight: 500, fontSize: 62, lineHeight: 1.04, letterSpacing: -1.5}, "What does a dollar earn on each chain?"),
+          h({fontSize: 24, color: K.muted, marginTop: 16, lineHeight: 1.3}, `What the average deposited dollar earns on the ${top.length} biggest chains, 30-day average.`)),
+        rank(top.map(c => ({name: c.name, sub: usd(c.tvl), v: c.avg, color: K.muted})), tb)),
+      h({height: 16}));
+  },
+  async chain(q){
+    const b = await getBoard(), tb = b.tbill && b.tbill.rate, c = CHAINS.byChain(b).find(x => x.page && x.slug === String(q.c || "").toLowerCase());
+    if (!c) return null;
+    return frame(c.name, "/chains/" + c.slug,
+      h({justifyContent: "space-between", alignItems: "center", marginTop: 26, flex: 1},
+        h({flexDirection: "column", maxWidth: 440},
+          h({fontFamily: F.display, fontWeight: 500, fontSize: c.name.length > 12 ? 56 : 64, lineHeight: 1.04, letterSpacing: -1.5}, `What does a dollar earn on ${c.name}?`),
+          h({fontSize: 24, color: K.muted, marginTop: 16, lineHeight: 1.3}, `${pct(c.avg)} for the average deposited dollar, across ${c.count} dollar yields and ${usd(c.tvl)}.`)),
+        rank(c.entries.slice(0, 5).map(e => ({name: `${e.r.name} ${e.r.symbol}`, v: e.apy30, color: CAT[e.r.cat] || K.accent})), tb)),
       h({height: 16}));
   },
   async funds(){

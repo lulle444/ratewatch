@@ -38,14 +38,14 @@ open(os.path.join(ROOT, "assets", "logo-mark.svg"), "w").write(LOGO)
 
 # the coins with a page of their own (lib/coins.js decides which yields belong to each)
 COINS = [("usdc", "USDC"), ("usdt", "USDT"), ("usds", "USDS"), ("dai", "DAI"), ("usde", "USDe"), ("pyusd", "PYUSD"), ("usdg", "USDG"), ("gho", "GHO"), ("rlusd", "RLUSD"), ("usd1", "USD1")]
-NAV = [("/", "Rates"), ("/funds", "Funds"), ("/calculator", "Calculator"), ("/alerts", "Alerts"), ("/learn", "Learn"), ("/about", "About")]
+NAV = [("/", "Rates"), ("/funds", "Funds"), ("/chains", "Chains"), ("/calculator", "Calculator"), ("/alerts", "Alerts"), ("/learn", "Learn"), ("/about", "About")]
 BOT = str(B.get("telegram") or "").lstrip("@")
 XLINK = f'<a class="navx" href="https://x.com/{B["x"]}" target="_blank" rel="noopener me" aria-label="Follow {{{{name}}}} on X">X</a>' if B.get("x") else ""
 
 
 def page(path, title, desc, body, og="/api/og?p=home", kind=None):
     cur = ' aria-current="page"'
-    nav = "".join(f'<a href="{h}"{cur if h == path else ""}>{t}</a>' for h, t in NAV)
+    nav = "".join(f'<a href="{h}"{cur if h == path or h != "/" and path.startswith(h + "/") else ""}>{t}</a>' for h, t in NAV)
     return fill(f"""<!doctype html>
 <html lang="en">
 <head>
@@ -84,7 +84,7 @@ def page(path, title, desc, body, og="/api/og?p=home", kind=None):
   <footer class="foot">
     <div><a class="logo small" href="/"><img src="/assets/logo-mark.svg" alt="" width="24" height="24"><span class="word">{{{{w1}}}}<i>{{{{w2}}}}</i></span></a>
       <p>{{{{tagline}}}}</p></div>
-    <nav aria-label="Footer">{"".join(f'<a href="{h}">{t}</a>' for h, t in NAV[:2] + [("/premium", "Risk premium")] + NAV[2:])}</nav>
+    <nav aria-label="Footer">{"".join(f'<a href="{h}">{t}</a>' for h, t in NAV[:3] + [("/premium", "Risk premium")] + NAV[3:])}</nav>
     <nav class="coinnav" aria-label="Yields by coin"><span>By coin</span>{"".join(f'<a href="/{c}">{n}</a>' for c, n in COINS)}</nav>
     <p class="fine">Yields from <a href="https://defillama.com/yields" target="_blank" rel="noopener">DefiLlama</a>. The T-bill rate from <a href="https://fred.stlouisfed.org/series/DGS3MO" target="_blank" rel="noopener">FRED</a> and the <a href="https://home.treasury.gov/resource-center/data-chart-center/interest-rates" target="_blank" rel="noopener">US Treasury</a>. No paid placements. Not financial advice. Sister sites: <a href="https://tidewatch-olive.vercel.app" target="_blank" rel="noopener">Tidewatch</a> and <a href="https://usepegwatch.vercel.app" target="_blank" rel="noopener">Pegwatch</a>.</p>
   </footer>
@@ -301,9 +301,14 @@ open(os.path.join(ROOT, "templates", "funds.html"), "w").write(page("/funds", "T
     "__MAIN__", og="/api/og?p=funds", kind="funds"))
 open(os.path.join(ROOT, "templates", "coin.html"), "w").write(page("/__COIN__", "Best __NAME__ yields on chain, vs the T-bill rate · {{name}}", "__DESC__",
     "__MAIN__", og="/api/og?p=coin&amp;c=__COIN__", kind="coin"))
+open(os.path.join(ROOT, "templates", "chains.html"), "w").write(page("/chains", "Dollar yields by chain: what a dollar earns on each chain · {{name}}",
+    "What the average deposited dollar earns on Ethereum, Base, Solana, Arbitrum and every other chain, against the 3-month T-bill rate, and what kind of yield pays it.",
+    "__MAIN__", og="/api/og?p=chains", kind="chains"))
+open(os.path.join(ROOT, "templates", "chain.html"), "w").write(page("/chains/__CHAIN__", "What a dollar earns on __NAME__: every dollar yield vs T-bills · {{name}}", "__DESC__",
+    "__MAIN__", og="/api/og?p=chain&amp;c=__CHAIN__", kind="chain"))
 open(os.path.join(ROOT, "templates", "yield.html"), "w").write(page("/y/__SLUG__", "__TITLE__", "__DESC__", "__MAIN__", og="/api/og?p=y&amp;s=__SLUG__", kind="yield"))
 
 open(os.path.join(ROOT, "sitemap.xml"), "w").write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
-    "".join(f"  <url><loc>{SITE}{p if p != '/' else ''}</loc></url>\n" for _, p, *_ in PAGES if p != "/404") + f"  <url><loc>{SITE}/funds</loc></url>\n</urlset>\n")
+    "".join(f"  <url><loc>{SITE}{p if p != '/' else ''}</loc></url>\n" for _, p, *_ in PAGES if p != "/404") + f"  <url><loc>{SITE}/funds</loc></url>\n  <url><loc>{SITE}/chains</loc></url>\n</urlset>\n")
 open(os.path.join(ROOT, "robots.txt"), "w").write(f"User-agent: *\nAllow: /\nSitemap: {SITE}/sitemap.xml\nSitemap: {SITE}/sitemap-yields.xml\n")
 print("built", ", ".join(p[0] for p in PAGES))
