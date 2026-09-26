@@ -5,6 +5,7 @@ const fs = require("fs"), path = require("path");
 const B = require("../brand.json");
 const {board: getBoard} = require("../lib/rates");
 const FUNDS = require("../lib/funds");
+const COINS = require("../lib/coins");
 
 const K = B.colors, F = B.fonts;
 const CAT = {tbill: K.cat_tbill, savings: K.cat_savings, synthetic: K.cat_synthetic, lending: K.cat_lending};
@@ -85,6 +86,28 @@ const CARDS = {
           h({fontFamily: F.display, fontWeight: 600, fontSize: 104, lineHeight: 1, color: K.ink, letterSpacing: -3, marginTop: 6}, tb.toFixed(2) + "%"))),
       h({gap: 16, marginTop: "auto", marginBottom: 24},
         ...b.cats.filter(c => c.count).map(c => tile(pct(c.median), c.name, tb != null && c.median != null ? pts(c.median - tb) + " vs T-bill" : null, CAT[c.id]))));
+  },
+  async coin(q){
+    const b = await getBoard(), tb = b.tbill && b.tbill.rate, coin = COINS.COINS.find(c => c.id === String(q.c || "").toLowerCase());
+    if (!coin) return null;
+    const rows = COINS.rowsOf(b.rows, coin.id).filter(r => r.apy30 != null).sort((a, c) => c.apy30 - a.apy30);
+    if (!rows.length) return null;
+    const top = rows.slice(0, 5), max = Math.max(...top.map(r => r.apy30), tb || 0) * 1.08;
+    return frame(coin.name + " yields", "/" + coin.id,
+      h({justifyContent: "space-between", alignItems: "center", marginTop: 26, flex: 1},
+        h({flexDirection: "column", maxWidth: 440},
+          h({fontFamily: F.display, fontWeight: 500, fontSize: 64, lineHeight: 1.04, letterSpacing: -1.5}, `Where does ${coin.name} earn the most?`),
+          h({fontSize: 24, color: K.muted, marginTop: 16, lineHeight: 1.3}, `${rows.length} ${coin.name} ${rows.length === 1 ? "yield" : "yields"}, 30-day averages${tb != null ? `, against the ${tb.toFixed(2)}% T-bill rate` : ""}.`)),
+        h({flexDirection: "column", width: 580, gap: 14},
+          ...top.map(r => h({flexDirection: "column"},
+            h({justifyContent: "space-between", fontSize: 21, marginBottom: 6},
+              h({fontWeight: 500}, `${r.name} ${r.symbol}`.slice(0, 34), h({color: K.muted, marginLeft: 8}, r.cat === "lending" ? r.chains[0] : "")),
+              h({fontFamily: F.mono, fontWeight: 500}, pct(r.apy30))),
+            h({height: 14, width: 580, backgroundColor: K.bg2, borderRadius: 4, position: "relative"},
+              h({height: 14, width: Math.max(6, Math.round(580 * r.apy30 / max)), backgroundColor: CAT[r.cat] || K.accent, borderRadius: 4}),
+              tb == null ? null : h({position: "absolute", left: Math.round(580 * tb / max), top: -4, width: 2, height: 22, backgroundColor: K.bench})))),
+          tb == null ? null : h({fontSize: 17, color: K.muted, marginTop: 2}, h({width: 14, height: 2, backgroundColor: K.bench, marginTop: 11, marginRight: 8}), `3-month T-bill ${tb.toFixed(2)}%`))),
+      h({height: 16}));
   },
   async funds(){
     const b = await getBoard(), tb = b.tbill && b.tbill.rate, by = {};

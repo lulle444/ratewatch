@@ -5,11 +5,12 @@ const fs = require("fs"), path = require("path");
 const B = require("../brand.json");
 const {board: getBoard} = require("../lib/rates");
 const FUNDS = require("../lib/funds");
+const COINS = require("../lib/coins");
 
 const SITE = "https://" + B.domain;
 const BOT = String(B.telegram || "").replace(/^@/, "");
 const read = f => fs.readFileSync(path.join(__dirname, "..", f), "utf8");
-let TPL, FTPL, NOTFOUND;
+let TPL, FTPL, CTPL, NOTFOUND;
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
 const pct = v => v == null || !isFinite(v) ? "–" : v.toFixed(2) + "%";
@@ -50,7 +51,7 @@ function hold(f){
 
 function main(r, board){
   const tb = board.tbill, cat = board.cats.find(c => c.id === r.cat) || {name: r.cat, about: ""};
-  const url = `${SITE}/y/${r.slug}`;
+  const url = `${SITE}/y/${r.slug}`, coin = COINS.coinOf(r);
   const share = `${label(r)} pays ${pct(r.apy30)} on chain (30-day average)` + (tb && r.over != null ? `, ${pts(r.over)} vs the 3-month T-bill rate.` : ".");
   const xurl = `https://x.com/intent/post?text=${encodeURIComponent(share)}&url=${encodeURIComponent(url)}` + (B.x ? `&via=${encodeURIComponent(B.x)}` : "");
   const similar = board.rows.filter(x => x !== r && x.cat === r.cat && x.apy30 != null)
@@ -103,7 +104,7 @@ ${hold(r.cat === "tbill" && fundOf(r))}
     <h2 id="simH">Other ${esc(cat.name.replace(/^[A-Z](?=[a-z])/, c => c.toLowerCase()))} near its rate</h2>
     <div class="ylinks">${similar.map(link).join("") || '<p class="empty">No other yield of this type right now.</p>'}</div>
     ${bigger.length ? `<h2 class="h2b">The biggest dollar yields of other types</h2><div class="ylinks">${bigger.map(link).join("")}</div>` : ""}
-    <p class="block"><a class="btn" href="/">See every dollar yield</a></p>
+    <p class="block"><a class="btn" href="/">See every dollar yield</a>${coin ? ` <a class="btn" href="/${coin.id}">Every ${esc(coin.name)} yield</a>` : ""}</p>
   </section>
 `;
 }
@@ -192,6 +193,50 @@ function fundsMain(board){
 `;
 }
 
+// /usdc, /usdt …: every yield paid in one dollar coin, highest first, next to the T-bill rate.
+function coinMain(coin, rows, board){
+  const tb = board.tbill, top = rows[0], tvl = rows.reduce((t, r) => t + r.tvl, 0);
+  const v = rows.map(r => r.apy30).filter(x => x != null).sort((a, b) => a - b), typical = v.length ? v[v.length >> 1] : null;
+  const catName = id => (board.cats.find(c => c.id === id) || {short: id}).short || id;
+  const where = r => r.cat === "lending" ? r.chains[0] + (r.meta ? " · " + r.meta : "") : r.chains.length === 1 ? r.chains[0] : r.chains.length + " chains";
+  const others = COINS.COINS.filter(c => c.id !== coin.id && COINS.rowsOf(board.rows, c.id).length);
+  const over = tb ? rows.filter(r => r.over != null && r.over > 0).length : null;
+  return `  <section class="pagehead">
+    <p class="eyebrow">${esc(coin.name)} yields</p>
+    <h1>Where does <em>${esc(coin.name)}</em> earn the most?</h1>
+    <p class="lede">${esc(coin.about)} Here is every place we track that pays you in ${esc(coin.name)}, from lending markets to savings tokens and vaults, held against the 3-month T-bill rate${tb ? ` of ${pct(tb.rate)}` : ""}.${over != null ? ` ${over} of ${rows.length} pay more than T-bills, and that extra is paid for with risk.` : ""}</p>
+    <p class="yact"><a class="btn" href="${esc(`https://x.com/intent/post?text=${encodeURIComponent(`The best ${coin.name} yield on chain right now: ${top.name} ${top.symbol} at ${pct(top.apy30)} (30-day average)` + (tb ? `, vs ${pct(tb.rate)} for T-bills.` : "."))}&url=${encodeURIComponent(SITE + "/" + coin.id)}` + (B.x ? `&via=${encodeURIComponent(B.x)}` : ""))}" target="_blank" rel="noopener">Share on X</a></p>
+  </section>
+
+  <section class="ystats" aria-label="${esc(coin.name)} in numbers">
+    ${stat(pct(top.apy30), `highest 30-day APY (${esc(top.name + " " + top.symbol)})`)}
+    ${stat(pct(typical), tb ? `typical 30-day APY (T-bill ${pct(tb.rate)})` : "typical 30-day APY")}
+    ${stat(usd(tvl), "deposited")}
+    ${stat(String(rows.length), rows.length === 1 ? "yield tracked" : "yields tracked")}
+  </section>
+
+  <section class="panel board" aria-labelledby="coinH">
+    <div class="sectionhead"><div><h2 id="coinH">Every ${esc(coin.name)} yield</h2><p class="sub">Highest 30-day average first. Tap one for its history, what pays it and where.</p></div></div>
+    <div class="tablebox"><table class="rt ct">
+      <thead><tr><th scope="col">${esc(coin.name)} yield</th><th scope="col" class="hm">Type</th><th scope="col" class="r">30-day APY</th><th scope="col" class="r">vs T-bill</th><th scope="col" class="r hs">Deposits</th></tr></thead>
+      <tbody>${rows.map(r => `<tr>
+        <td><a class="tok rowlink" href="/y/${esc(r.slug)}"><b>${esc(r.name)} <span class="muted">${esc(r.symbol)}</span></b><small>${esc(where(r))}</small></a></td>
+        <td class="hm"><span class="type"><span class="sw" style="--c:var(--b-cat-${r.cat})"></span>${esc(catName(r.cat))}</span></td>
+        <td class="r"><span class="apy">${pct(r.apy30)}</span></td>
+        <td class="r"><span class="over ${overCls(r.over)}">${pts(r.over)}</span></td>
+        <td class="r hs num">${usd(r.tvl)}</td></tr>`).join("")}</tbody>
+    </table></div>
+    <p class="fine">30-day APY is DefiLlama’s 30-day average. Rates that pay part of their yield in reward tokens count those too; the yield’s own page says how much.</p>
+  </section>
+${others.length ? `
+  <section class="yrel" aria-labelledby="otherH">
+    <h2 id="otherH">Other dollars</h2>
+    <div class="chips coinchips">${others.map(c => `<a class="chip" href="/${c.id}">${esc(c.name)}</a>`).join("")}<a class="chip" href="/funds">T-bill funds</a></div>
+  </section>` : ""}
+  <p class="block"><a class="btn" href="/">See every dollar yield</a></p>
+`;
+}
+
 function page(r, board){
   const sum = summary(r, board.tbill);
   const t = `${label(r)}: APY and history vs T-bills · ${B.name}`;
@@ -217,7 +262,22 @@ module.exports = async function handler(req, res){
     res.setHeader("Content-Type", "application/xml; charset=utf-8");
     res.setHeader("Cache-Control", "public, s-maxage=21600, stale-while-revalidate=86400");
     return res.status(200).send('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+      COINS.COINS.filter(c => COINS.rowsOf(rows, c.id).length).map(c => `  <url><loc>${SITE}/${c.id}</loc></url>\n`).join("") +
       rows.map(r => `  <url><loc>${SITE}/y/${esc(r.slug)}</loc></url>\n`).join("") + "</urlset>\n");
+  }
+
+  if (q.p === "coin"){
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    if (!rows.length){ res.setHeader("Cache-Control", "no-store"); return res.status(503).send(read("404.html").replace("The link may be old or mistyped.", "Rates are unavailable right now. Please try again in a minute.")); }
+    const coin = COINS.COINS.find(c => c.id === String(q.c || "").toLowerCase());
+    const list = coin ? COINS.rowsOf(rows, coin.id).filter(r => r.apy30 != null).sort((a, b) => b.apy30 - a.apy30) : [];
+    if (!list.length){ res.setHeader("Cache-Control", "public, s-maxage=600"); return res.status(404).send(read("404.html")); }
+    CTPL = CTPL || read("templates/coin.html");
+    const tb = board.tbill, desc = `Every ${coin.name} yield on chain, highest first: ${list[0].name} ${list[0].symbol} leads at ${pct(list[0].apy30)} (30-day average)${tb ? `, against the ${pct(tb.rate)} T-bill rate` : ""}.`;
+    res.setHeader("Cache-Control", "public, s-maxage=900, stale-while-revalidate=86400");
+    return res.status(200).send(CTPL
+      .replace(/__COIN__/g, () => coin.id).replace(/__NAME__/g, () => esc(coin.name)).replace(/__DESC__/g, () => esc(desc))
+      .replace("__MAIN__", () => coinMain(coin, list, board)));
   }
 
   if (q.p === "funds"){

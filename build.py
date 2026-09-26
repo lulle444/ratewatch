@@ -36,6 +36,8 @@ LOGO = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64
 """
 open(os.path.join(ROOT, "assets", "logo-mark.svg"), "w").write(LOGO)
 
+# the coins with a page of their own (lib/coins.js decides which yields belong to each)
+COINS = [("usdc", "USDC"), ("usdt", "USDT"), ("usds", "USDS"), ("dai", "DAI"), ("usde", "USDe"), ("pyusd", "PYUSD"), ("usdg", "USDG"), ("gho", "GHO"), ("rlusd", "RLUSD"), ("usd1", "USD1")]
 NAV = [("/", "Rates"), ("/funds", "Funds"), ("/calculator", "Calculator"), ("/alerts", "Alerts"), ("/learn", "Learn"), ("/about", "About")]
 BOT = str(B.get("telegram") or "").lstrip("@")
 XLINK = f'<a class="navx" href="https://x.com/{B["x"]}" target="_blank" rel="noopener me" aria-label="Follow {{{{name}}}} on X">X</a>' if B.get("x") else ""
@@ -83,6 +85,7 @@ def page(path, title, desc, body, og="/api/og?p=home", kind=None):
     <div><a class="logo small" href="/"><img src="/assets/logo-mark.svg" alt="" width="24" height="24"><span class="word">{{{{w1}}}}<i>{{{{w2}}}}</i></span></a>
       <p>{{{{tagline}}}}</p></div>
     <nav aria-label="Footer">{"".join(f'<a href="{h}">{t}</a>' for h, t in NAV)}</nav>
+    <nav class="coinnav" aria-label="Yields by coin"><span>By coin</span>{"".join(f'<a href="/{c}">{n}</a>' for c, n in COINS)}</nav>
     <p class="fine">Yields from <a href="https://defillama.com/yields" target="_blank" rel="noopener">DefiLlama</a>. The T-bill rate from <a href="https://fred.stlouisfed.org/series/DGS3MO" target="_blank" rel="noopener">FRED</a> and the <a href="https://home.treasury.gov/resource-center/data-chart-center/interest-rates" target="_blank" rel="noopener">US Treasury</a>. No paid placements. Not financial advice. Sister sites: <a href="https://tidewatch-olive.vercel.app" target="_blank" rel="noopener">Tidewatch</a> and <a href="https://usepegwatch.vercel.app" target="_blank" rel="noopener">Pegwatch</a>.</p>
   </footer>
 </div>
@@ -273,6 +276,8 @@ os.makedirs(os.path.join(ROOT, "templates"), exist_ok=True)
 open(os.path.join(ROOT, "templates", "funds.html"), "w").write(page("/funds", "Tokenized T-bill funds compared: who can buy, minimums and yields · {{name}}",
     "Every tokenized T-bill fund side by side: its yield against the T-bill rate, who is allowed to buy it, the minimum, fees and how you get your dollars back.",
     "__MAIN__", og="/api/og?p=funds", kind="funds"))
+open(os.path.join(ROOT, "templates", "coin.html"), "w").write(page("/__COIN__", "Best __NAME__ yields on chain, vs the T-bill rate · {{name}}", "__DESC__",
+    "__MAIN__", og="/api/og?p=coin&amp;c=__COIN__", kind="coin"))
 open(os.path.join(ROOT, "templates", "yield.html"), "w").write(page("/y/__SLUG__", "__TITLE__", "__DESC__", "__MAIN__", og="/api/og?p=y&amp;s=__SLUG__", kind="yield"))
 
 open(os.path.join(ROOT, "sitemap.xml"), "w").write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +

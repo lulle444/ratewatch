@@ -263,3 +263,14 @@ button{font:inherit;color:inherit}
   .ft td:empty{display:none}
   .ft td>*{justify-self:start}
 }
+
+/* coin pages */
+.ct .rowlink{text-decoration:none}
+.ct .rowlink b{border-bottom:1px solid transparent}
+.ct tr:hover .rowlink b{border-bottom-color:var(--ink)}
+.ct tr:hover td{background:var(--bg)}
+.coinchips a.chip{text-decoration:none}
+.foot .coinnav{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--muted)}
+.foot .coinnav span{font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;padding-top:2px}
+.foot .coinnav a{color:var(--ink);text-decoration:none}
+.foot .coinnav a:hover{text-decoration:underline}
