@@ -41,7 +41,7 @@ BOT = str(B.get("telegram") or "").lstrip("@")
 XLINK = f'<a class="navx" href="https://x.com/{B["x"]}" target="_blank" rel="noopener me" aria-label="Follow {{{{name}}}} on X">X</a>' if B.get("x") else ""
 
 
-def page(path, title, desc, body, og="/assets/og.png"):
+def page(path, title, desc, body, og="/api/og?p=home", kind=None):
     cur = ' aria-current="page"'
     nav = "".join(f'<a href="{h}"{cur if h == path else ""}>{t}</a>' for h, t in NAV)
     return fill(f"""<!doctype html>
@@ -70,7 +70,7 @@ def page(path, title, desc, body, og="/assets/og.png"):
 <link rel="stylesheet" href="/styles.css">
 <link rel="stylesheet" href="/brand.css">
 </head>
-<body data-page="{path.strip('/') or 'home'}" data-bot="{BOT}">
+<body data-page="{kind or path.strip('/') or 'home'}" data-bot="{BOT}">
 <div class="wrap">
   <header class="nav">
     <a class="logo" href="/" aria-label="{{{{name}}}} home"><img src="/assets/logo-mark.svg" alt="" width="34" height="34"><span class="word">{{{{w1}}}}<i>{{{{w2}}}}</i></span></a>
@@ -247,9 +247,13 @@ PAGES = [
     ("404.html", "/404", "Not found · {{name}}", "That page isn’t here.", NOTFOUND),
 ]
 for f, path, title, desc, body in PAGES:
-    open(os.path.join(ROOT, f), "w").write(page(path, fill(title), fill(desc), fill(body)))
+    open(os.path.join(ROOT, f), "w").write(page(path, fill(title), fill(desc), fill(body), og="/api/og?p=home" if path == "/" else "/assets/og.png"))
+
+# One page per dollar yield, /y/ethena-susde: api/yield.js fills the __KEYS__ in this template with the yield's numbers.
+os.makedirs(os.path.join(ROOT, "templates"), exist_ok=True)
+open(os.path.join(ROOT, "templates", "yield.html"), "w").write(page("/y/__SLUG__", "__TITLE__", "__DESC__", "__MAIN__", og="/api/og?p=y&amp;s=__SLUG__", kind="yield"))
 
 open(os.path.join(ROOT, "sitemap.xml"), "w").write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
     "".join(f"  <url><loc>{SITE}{p if p != '/' else ''}</loc></url>\n" for _, p, *_ in PAGES if p != "/404") + "</urlset>\n")
-open(os.path.join(ROOT, "robots.txt"), "w").write(f"User-agent: *\nAllow: /\nSitemap: {SITE}/sitemap.xml\n")
+open(os.path.join(ROOT, "robots.txt"), "w").write(f"User-agent: *\nAllow: /\nSitemap: {SITE}/sitemap.xml\nSitemap: {SITE}/sitemap-yields.xml\n")
 print("built", ", ".join(p[0] for p in PAGES))

@@ -15,6 +15,9 @@ synthetic dollar and deep lending market, grouped by what pays the yield and com
   T-bill rate on the same days.
 - `.github/workflows/warm.yml` refreshes the cache every 15 minutes and prints a summary in its log. Set the repo
   variable `SITE_URL` to the live address. `probe.yml` (manual) lists which DefiLlama projects look like dollar yields.
-- `assets/og.png` is the share image and has no numbers in it.
+- `/y/<slug>` is one page per yield (`api/yield.js` fills `templates/yield.html`, which build.py writes), and
+  `/sitemap-yields.xml` lists them. T-bill funds show "Who can hold it" from `lib/funds.js`.
+- `/api/og?p=home` and `/api/og?p=y&s=<slug>` draw share images with live numbers (@vercel/og). `assets/og.png` is the
+  static fallback, with no numbers in it.
 
 Not financial advice. No paid placements.

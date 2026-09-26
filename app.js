@@ -142,6 +142,7 @@ function detailRow(r){
       <h4>Where it pays</h4>
       <ul class="pl">${r.pools.slice(0, 6).map(p => `<li><a href="https://defillama.com/yields/pool/${esc(p.pool)}" target="_blank" rel="noopener">${esc(p.chain)}</a><span class="num">${pct(p.apy30 ?? p.apy)}</span><span class="num muted">${usd(p.tvl)}</span></li>`).join("")}</ul>
       ${r.reward ? `<p>${pct(r.reward)} of today’s rate is paid in reward tokens, which can end or lose value.</p>` : ""}
+      <p><a class="pagelink" href="/y/${encodeURIComponent(r.slug)}">Open the full page for ${esc(r.symbol)} →</a></p>
       ${BOT ? `<p><a class="btn primary small" href="https://t.me/${BOT}?start=a_${encodeURIComponent(r.key)}" target="_blank" rel="noopener">🔔 Alert me when ${esc(r.symbol)} moves</a></p>` : ""}
     </div></div></td></tr>`;
 }
@@ -154,18 +155,44 @@ function loadHistory(r){
     .catch(() => { if ($("dchart")) $("dchart").innerHTML = '<p class="empty">History couldn’t be loaded right now.</p>'; });
 }
 
+/* ---------- one yield's page: its history, 3 months to a year ---------- */
+if ($("ychart")){
+  const box = $("ychart"), r = {id: box.dataset.pool, symbol: box.dataset.symbol, cat: box.dataset.cat}, got = new Map();
+  let days = 180;
+  const show = () => {
+    const d = days;
+    if (got.has(d)) return drawHistory(box, got.get(d), r);
+    fetch(`/api/history?pool=${encodeURIComponent(r.id)}&days=${d}`).then(x => x.ok ? x.json() : Promise.reject())
+      .then(h => { got.set(d, h); if (days === d) drawHistory(box, h, r); })
+      .catch(() => { box.innerHTML = '<p class="empty">History couldn’t be loaded right now.</p>'; });
+  };
+  document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => {
+    days = +b.dataset.days;
+    document.querySelectorAll(".seg button").forEach(x => x.setAttribute("aria-pressed", x === b));
+    show();
+  }));
+  let rz2;
+  addEventListener("resize", () => { clearTimeout(rz2); rz2 = setTimeout(() => { if (got.has(days)) drawHistory(box, got.get(days), r); }, 150); });
+  show();
+}
+
 function drawHistory(box, h, r){
   const pts = h.points || [];
   if (pts.length < 3){ box.innerHTML = '<p class="empty">Not enough history yet.</p>'; return; }
-  const W = Math.max(300, box.clientWidth || 600), H = 200, L = 38, R = 10, T = 10, B = 24;
+  const W = Math.max(300, box.clientWidth || 600), H = box.id === "ychart" ? 260 : 200, L = 38, R = 10, T = 10, B = 24;
   const hi = Math.max(...pts.map(p => Math.max(p.apy, p.tbill || 0))), top = Math.ceil(hi * 1.1) || 1;
   const x = i => L + i / (pts.length - 1) * (W - L - R), y = v => T + (1 - v / top) * (H - T - B);
   const step = top > 16 ? 4 : top > 8 ? 2 : 1;
   let g = "";
   for (let v = 0; v <= top; v += step) g += `<line class="gr" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${v}%</text>`;
   const mfmt = d => new Date(d + "T12:00:00Z").toLocaleDateString("en-US", {month: "short", timeZone: "UTC"});
-  let lastM = "";
-  pts.forEach((p, i) => { const m = mfmt(p.d); if (m !== lastM && p.d.slice(8) <= "07"){ g += `<text class="ax" x="${x(i)}" y="${H - 6}" text-anchor="middle">${m}</text>`; } lastM = m; });
+  let lastM = "", lastX = -1e9;
+  pts.forEach((p, i) => {
+    const m = mfmt(p.d);
+    // a label at each month's start, skipping one that would crowd the last (a year on a phone)
+    if (m !== lastM && p.d.slice(8) <= "07" && x(i) - lastX >= 44 && x(i) >= L + 12){ g += `<text class="ax" x="${x(i)}" y="${H - 6}" text-anchor="middle">${m}</text>`; lastX = x(i); }
+    lastM = m;
+  });
   const line = k => pts.map((p, i) => p[k] == null ? null : `${x(i).toFixed(1)},${y(p[k]).toFixed(1)}`).filter(Boolean).join(" ");
   box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${g}<polyline class="bl" points="${line("tbill")}"/><polyline class="ln" style="stroke:${catColor(r.cat)}" points="${line("apy")}"/><line class="hair" id="hair" y1="${T}" y2="${H - B}" visibility="hidden"/></svg><div class="tip" hidden></div>`;
   const tip = box.querySelector(".tip"), hair = box.querySelector("#hair"), svg = box.querySelector("svg");

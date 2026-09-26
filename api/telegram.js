@@ -20,7 +20,7 @@ async function rateCard(chat, q){
     {reply_markup: {inline_keyboard: [
       up.map(v => ({text: `🔺 above ${v}%`, callback_data: `a|${h}|${v}|above`})),
       down.map(v => ({text: `🔻 below ${v}%`, callback_data: `a|${h}|${v}|below`})),
-      [{text: `Open ${B.name}`, url: A.SITE}],
+      [{text: `See ${r.symbol} on ${B.name}`, url: `${A.SITE}/y/${r.slug}`}],
     ].filter(row => row.length)}});
 }
 
