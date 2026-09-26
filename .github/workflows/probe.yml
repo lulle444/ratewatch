@@ -1,6 +1,9 @@
 name: Probe sources
 # Manual check of the raw sources: which DefiLlama projects look like dollar yields, and whether the T-bill feeds answer.
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      match: {description: "Also list every pool whose project or symbol matches this regex", required: false, default: ""}
 jobs:
   probe:
     runs-on: ubuntu-latest
@@ -21,4 +24,14 @@ jobs:
           for k, v in sorted(by.items(), key=lambda x: -x[1])[:120]:
               syms = sorted({p["symbol"] for p in st if p["project"] == k})[:6]
               print(f"  {k:32} {v/1e6:9.0f}M  {' '.join(syms)}")
+          import os, re
+          m = os.environ.get("MATCH")
+          if m:
+              rx = re.compile(m, re.I)
+              hits = sorted([p for p in d if rx.search(p["project"]) or rx.search(p["symbol"])], key=lambda p: -(p.get("tvlUsd") or 0))
+              print(f"\n{len(hits)} pools matching {m!r}:")
+              for p in hits[:80]:
+                  print(f'  {p["project"]:24} {p["symbol"]:18} {p["chain"]:12} {(p.get("tvlUsd") or 0)/1e6:8.1f}M apy {p.get("apy")} 30d {p.get("apyMean30d")} base {p.get("apyBase")} rew {p.get("apyReward")} stable {p.get("stablecoin")} exp {p.get("exposure")} out {p.get("outlier")} meta {p.get("poolMeta")!r}')
           PY
+        env:
+          MATCH: ${{ inputs.match }}
